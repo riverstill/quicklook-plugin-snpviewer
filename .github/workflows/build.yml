@@ -1,0 +1,105 @@
+name: Build
+
+on:
+  push:
+    branches: [main]
+    tags: ["v*"]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Build (${{ matrix.configuration }} | ${{ matrix.platform }})
+    runs-on: windows-latest
+
+    strategy:
+      fail-fast: false
+      matrix:
+        configuration: [Release]
+        platform: [AnyCPU]
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET Framework 4.6.2 reference assemblies
+        run: |
+          nuget install Microsoft.NETFramework.ReferenceAssemblies.net462 `
+              -Version 1.0.3 -OutputDirectory ${{ github.workspace }}/.refasm `
+              -PackageSaveMode nuspec
+
+      - name: Setup MSBuild
+        uses: microsoft/setup-msbuild@v2
+
+      - name: Restore NuGet packages
+        shell: pwsh
+        run: |
+          nuget restore QuickLook.Plugin.SnpViewer.sln `
+              -PackagesDirectory ${{ github.workspace }}/.packages
+
+      - name: Build solution
+        run: |
+          msbuild QuickLook.Plugin.SnpViewer.sln `
+              /p:Configuration=${{ matrix.configuration }} `
+              /p:Platform=${{ matrix.platform }} `
+              /p:RestorePackagesPath=${{ github.workspace }}/.packages `
+              /p:FrameworkPathOverride=${{ github.workspace }}/.refasm/Microsoft.NETFramework.ReferenceAssemblies.net462/lib/4.6.2
+
+      - name: Verify output
+        shell: pwsh
+        run: |
+          $dir = "Build/${{ matrix.configuration }}/QuickLook.Plugin/QuickLook.Plugin.SnpViewer"
+          if (-not (Test-Path $dir)) { throw "Build output not found at $dir" }
+          Get-ChildItem $dir | Select-Object Name, Length | Format-Table -AutoSize
+
+      - name: Package as .qlplugin
+        shell: pwsh
+        run: |
+          $src = "Build/${{ matrix.configuration }}/QuickLook.Plugin/QuickLook.Plugin.SnpViewer"
+          $dst = "QuickLook.Plugin.SnpViewer.qlplugin"
+          if (Test-Path $dst) { Remove-Item $dst -Force }
+          Compress-Archive -Path "$src/*" -DestinationPath $dst -Force
+          Get-Item $dst | Select-Object Name, Length | Format-Table -AutoSize
+
+      - name: Upload .qlplugin artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: QuickLook.Plugin.SnpViewer-${{ matrix.configuration }}-${{ matrix.platform }}
+          path: QuickLook.Plugin.SnpViewer.qlplugin
+          if-no-files-found: error
+          retention-days: 30
+
+  test:
+    name: Unit tests
+    runs-on: windows-latest
+    needs: build
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET SDK
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+
+      - name: Setup .NET Framework 4.6.2 reference assemblies
+        run: |
+          nuget install Microsoft.NETFramework.ReferenceAssemblies.net462 `
+              -Version 1.0.3 -OutputDirectory ${{ github.workspace }}/.refasm `
+              -PackageSaveMode nuspec
+
+      - name: Restore
+        run: |
+          dotnet restore tests/QuickLook.Plugin.SnpViewer.Tests.csproj `
+              /p:FrameworkPathOverride=${{ github.workspace }}/.refasm/Microsoft.NETFramework.ReferenceAssemblies.net462/lib/4.6.2
+
+      - name: Test
+        run: |
+          dotnet test tests/QuickLook.Plugin.SnpViewer.Tests.csproj `
+              --no-restore `
+              /p:FrameworkPathOverride=${{ github.workspace }}/.refasm/Microsoft.NETFramework.ReferenceAssemblies.net462/lib/4.6.2
