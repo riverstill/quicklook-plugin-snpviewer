@@ -142,51 +142,37 @@ public static class TouchstoneParser
             return;
         }
 
-        // Tokenize
         var tokens = body.Split(new[] { ' ', '\t' }, StringSplitOptions.RemoveEmptyEntries);
-        int idx = 0;
 
-        // Optional explicit keys like "freq_unit: GHz"
-        while (idx < tokens.Length)
+        // Touchstone v2.0/v2.1 option line: keywords may be in any order, but
+        // each keyword has a fixed meaning. Scan the tokens and pick out
+        // freq_unit, param type, data format, and reference resistance.
+        for (int idx = 0; idx < tokens.Length; idx++)
         {
             string tok = tokens[idx];
 
-            // freq_unit
-            if (MatchesFreqUnit(tok) && idx + 1 < tokens.Length && MatchesFreqUnit(tokens[idx + 1]))
+            if (MatchesFreqUnit(tok))
             {
-                doc.FrequencyUnit = ParseFreqUnit(tokens[idx + 1]);
-                idx += 2;
-                continue;
+                doc.FrequencyUnit = ParseFreqUnit(tok);
             }
-
-            // param type
-            if (IsParamType(tok) && idx + 1 < tokens.Length && IsParamType(tokens[idx + 1]))
+            else if (IsParamType(tok))
             {
-                doc.ParamType = ParseParamType(tokens[idx + 1]);
-                idx += 2;
-                continue;
+                doc.ParamType = ParseParamType(tok);
             }
-
-            // data format
-            if (IsDataFormat(tok) && idx + 1 < tokens.Length && IsDataFormat(tokens[idx + 1]))
+            else if (IsDataFormat(tok))
             {
-                doc.DataFormat = ParseDataFormat(tokens[idx + 1]);
-                idx += 2;
-                continue;
+                doc.DataFormat = ParseDataFormat(tok);
             }
-
-            // reference resistance: "R 50"
-            if (tok.Equals("R", StringComparison.OrdinalIgnoreCase) && idx + 1 < tokens.Length)
+            else if (tok.Equals("R", StringComparison.OrdinalIgnoreCase) && idx + 1 < tokens.Length)
             {
-                if (double.TryParse(tokens[idx + 1], NumberStyles.Float, CultureInfo.InvariantCulture, out var r))
+                if (double.TryParse(tokens[idx + 1], NumberStyles.Float,
+                        CultureInfo.InvariantCulture, out var r))
                     doc.ReferenceResistance = r;
-                idx += 2;
-                continue;
             }
-
-            // unknown / comment
-            doc.HeaderComments.Add(tok);
-            idx++;
+            else
+            {
+                doc.HeaderComments.Add(tok);
+            }
         }
     }
 
