@@ -87,9 +87,10 @@
                          Foreground="#E0E0E0" Checked="XLog_OnChecked" />
         </StackPanel>
 
-        <!-- Data preview -->
+        <!-- Data preview. NOTE: ItemsSource is assigned in code-behind
+             (SyncDataGrid) to DataTable.DefaultView. Binding a DataTable
+             object itself does not work - DataGrid needs the DataView. -->
         <DataGrid Grid.Row="3" x:Name="DataGrid"
-                  ItemsSource="{Binding DataTable}"
                   AutoGenerateColumns="True"
                   IsReadOnly="True"
                   EnableRowVirtualization="True"

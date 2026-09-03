@@ -54,6 +54,9 @@ public partial class SnpPanel : UserControl
                 _vm.Summary = $"Failed to parse: {parseError.Message}";
                 _vm.BuildEmptyPlot();
                 _vm.RebuildDataGrid();
+                Plot.Model = _vm.PlotModel;
+                Plot.InvalidatePlot();
+                SyncDataGrid();
                 return;
             }
 
@@ -73,6 +76,8 @@ public partial class SnpPanel : UserControl
             // subsequent rebuilds need to invalidate the visual.
             Plot.Model = _vm.PlotModel;
             Plot.InvalidatePlot();
+
+            SyncDataGrid();
         }
         catch (Exception ex)
         {
@@ -113,6 +118,16 @@ public partial class SnpPanel : UserControl
         rebuild();
         Plot.Model = _vm.PlotModel;
         Plot.InvalidatePlot();
+    }
+
+    private void SyncDataGrid()
+    {
+        if (_vm is null) return;
+        // DataGrid cannot consume a DataTable object itself; it needs the
+        // DataView. Resetting ItemsSource forces column regeneration after
+        // RebuildDataGrid() rebuilt the table schema via DataTable.Reset().
+        DataGrid.ItemsSource = null;
+        DataGrid.ItemsSource = _vm.DataTable.DefaultView;
     }
 }
 
