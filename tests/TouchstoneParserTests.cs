@@ -103,7 +103,7 @@ public class TouchstoneParserTests
         {
             var doc = TouchstoneParser.Parse(tmp);
             Assert.Empty(doc.Points);
-            Assert.Contains(doc.Warnings, w => w.Contains("empty", StringComparison.OrdinalIgnoreCase));
+            Assert.Contains(doc.Warnings, w => w.IndexOf("empty", StringComparison.OrdinalIgnoreCase) >= 0);
         }
         finally
         {
