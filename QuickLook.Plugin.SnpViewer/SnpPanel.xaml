@@ -1,0 +1,100 @@
+<UserControl x:Class="QuickLook.Plugin.SnpViewer.SnpPanel"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:oxy="http://oxyplot.org/wpf"
+             xmlns:local="clr-namespace:QuickLook.Plugin.SnpViewer"
+             mc:Ignorable="d"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             d:DataContext="{d:DesignInstance local:SnpViewModel}"
+             Background="#1E1E1E"
+             Foreground="#E0E0E0"
+             Loaded="SnpPanel_OnLoaded">
+    <UserControl.Resources>
+        <Style TargetType="TextBlock">
+            <Setter Property="Foreground" Value="#E0E0E0" />
+        </Style>
+        <Style TargetType="DataGrid">
+            <Setter Property="Background" Value="#1E1E1E" />
+            <Setter Property="Foreground" Value="#E0E0E0" />
+            <Setter Property="RowBackground" Value="#1E1E1E" />
+            <Setter Property="AlternatingRowBackground" Value="#262626" />
+            <Setter Property="GridLinesVisibility" Value="Horizontal" />
+            <Setter Property="HorizontalGridLinesBrush" Value="#333" />
+            <Setter Property="HeadersVisibility" Value="Column" />
+            <Setter Property="BorderThickness" Value="0" />
+        </Style>
+        <Style TargetType="DataGridColumnHeader">
+            <Setter Property="Background" Value="#2D2D30" />
+            <Setter Property="Foreground" Value="#E0E0E0" />
+            <Setter Property="BorderBrush" Value="#333" />
+            <Setter Property="BorderThickness" Value="0,0,1,1" />
+            <Setter Property="Padding" Value="6,4" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+        </Style>
+        <Style TargetType="DataGridCell">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="Padding" Value="4,2" />
+        </Style>
+    </UserControl.Resources>
+
+    <Grid Margin="12">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="180" />
+        </Grid.RowDefinitions>
+
+        <!-- Header summary -->
+        <Border Grid.Row="0" Padding="10" Background="#2D2D30" CornerRadius="4" Margin="0,0,0,8">
+            <StackPanel>
+                <TextBlock Text="{Binding FileName}" FontSize="18" FontWeight="SemiBold" />
+                <TextBlock Text="{Binding Summary}" FontSize="12" Opacity="0.85" Margin="0,4,0,0" />
+                <ItemsControl ItemsSource="{Binding Warnings}" Margin="0,4,0,0">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <TextBlock Text="{Binding}" Foreground="#E0A800" FontSize="11" />
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </StackPanel>
+        </Border>
+
+        <!-- Plot -->
+        <Border Grid.Row="1" Background="#FFFFFF" CornerRadius="4" Padding="4">
+            <oxy:PlotView Model="{Binding PlotModel}" />
+        </Border>
+
+        <!-- Tabs / units toggle -->
+        <StackPanel Grid.Row="2" Orientation="Horizontal" Margin="0,8,0,4">
+            <TextBlock Text="Y-axis:" VerticalAlignment="Center" Margin="0,0,8,0" />
+            <RadioButton x:Name="YDb" Content="dB" GroupName="Y" Margin="0,0,12,0"
+                         Foreground="#E0E0E0" Checked="YDb_OnChecked" />
+            <RadioButton x:Name="YMagnitude" Content="Magnitude" GroupName="Y" Margin="0,0,12,0"
+                         Foreground="#E0E0E0" Checked="YMagnitude_OnChecked" />
+            <RadioButton x:Name="YReal" Content="Real" GroupName="Y" Margin="0,0,12,0"
+                         Foreground="#E0E0E0" Checked="YReal_OnChecked" />
+            <RadioButton x:Name="YImag" Content="Imaginary" GroupName="Y" Margin="0,0,12,0"
+                         Foreground="#E0E0E0" Checked="YImag_OnChecked" />
+            <RadioButton x:Name="YPhase" Content="Phase (°)" GroupName="Y"
+                         Foreground="#E0E0E0" Checked="YPhase_OnChecked" />
+            <TextBlock Text="X-axis:" VerticalAlignment="Center" Margin="24,0,8,0" />
+            <RadioButton x:Name="XLinear" Content="Linear" GroupName="X" Margin="0,0,12,0"
+                         Foreground="#E0E0E0" Checked="XLinear_OnChecked" />
+            <RadioButton x:Name="XLog" Content="Log" GroupName="X"
+                         Foreground="#E0E0E0" Checked="XLog_OnChecked" />
+        </StackPanel>
+
+        <!-- Data preview -->
+        <DataGrid Grid.Row="3" x:Name="DataGrid"
+                  ItemsSource="{Binding DataRows}"
+                  AutoGenerateColumns="False"
+                  IsReadOnly="True"
+                  EnableRowVirtualization="True"
+                  CanUserAddRows="False"
+                  CanUserDeleteRows="False"
+                  SelectionUnit="FullRow" />
+    </Grid>
+</UserControl>

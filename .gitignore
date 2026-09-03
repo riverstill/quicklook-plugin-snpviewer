@@ -1,0 +1,39 @@
+## Build output
+[Bb]in/
+[Oo]bj/
+[Oo]ut/
+
+## Visual Studio
+.vs/
+*.user
+*.userprefs
+*.suo
+*.sln.docstates
+
+## Rider / VS Code
+.idea/
+.vscode/
+
+## TestResults
+[Tt]est[Rr]esult*/
+*.coverage
+*.coveragexml
+
+## NuGet
+*.nupkg
+*.snupkg
+packages/
+**/packages/
+
+## Tools
+_ReSharper*/
+*.[Pp]ublish.xml
+*.pfx
+*.publishsettings
+
+## Misc
+*.log
+*.tmp
+*.swp
+.DS_Store
+Thumbs.db

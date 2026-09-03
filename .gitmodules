@@ -1,0 +1,4 @@
+[submodule "QuickLook.Common"]
+	path = QuickLook.Common
+	url = https://github.com/QL-Win/QuickLook.git
+	branch = master
