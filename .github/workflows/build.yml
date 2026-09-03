@@ -45,7 +45,7 @@ jobs:
         run: |
           msbuild QuickLook.Plugin.SnpViewer.sln `
               /p:Configuration=${{ matrix.configuration }} `
-              /p:Platform=${{ matrix.platform }} `
+              /p:Platform="${{ matrix.platform == 'AnyCPU' && 'Any CPU' || matrix.platform }}" `
               /p:RestorePackagesPath=${{ github.workspace }}/.packages `
               /p:FrameworkPathOverride=${{ github.workspace }}/.refasm/Microsoft.NETFramework.ReferenceAssemblies.net462/lib/4.6.2
 
