@@ -89,8 +89,8 @@
 
         <!-- Data preview -->
         <DataGrid Grid.Row="3" x:Name="DataGrid"
-                  ItemsSource="{Binding DataRows}"
-                  AutoGenerateColumns="False"
+                  ItemsSource="{Binding DataTable}"
+                  AutoGenerateColumns="True"
                   IsReadOnly="True"
                   EnableRowVirtualization="True"
                   CanUserAddRows="False"

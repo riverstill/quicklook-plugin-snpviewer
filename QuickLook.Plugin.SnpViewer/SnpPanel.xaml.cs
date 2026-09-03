@@ -1,15 +1,14 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 using System;
-using System.Collections.Generic;
-using System.Collections.ObjectModel;
+using System.Data;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Numerics;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Threading;
 using OxyPlot;
 using OxyPlot.Axes;
 using OxyPlot.Series;
@@ -35,24 +34,47 @@ public partial class SnpPanel : UserControl
         YDb.IsChecked = true;
         XLinear.IsChecked = true;
 
+        TouchstoneDocument? doc = null;
+        Exception? parseError = null;
         try
         {
-            await Task.Run(() => _vm.Parse());
+            doc = await Task.Run(() => TouchstoneParser.Parse(path));
         }
         catch (Exception ex)
         {
-            _vm.Summary = $"Failed to parse: {ex.Message}";
-            _vm.BuildEmptyPlot();
-            return;
+            parseError = ex;
         }
 
-        _vm.RebuildPlot(YAxisMode.Db, XAxisMode.Linear);
-        _vm.RebuildDataGrid();
+        try
+        {
+            if (parseError is not null)
+            {
+                _vm.Summary = $"Failed to parse: {parseError.Message}";
+                _vm.BuildEmptyPlot();
+                _vm.RebuildDataGrid();
+                return;
+            }
+
+            _vm.ApplyDocument(doc!);
+
+            // Re-apply current radio selection (the bindings may not have
+            // observed the radio-button Checked events fired before the VM
+            // had a document to operate on).
+            YDb.IsChecked = true;
+            XLinear.IsChecked = true;
+            _vm.RebuildPlot(YAxisMode.Db, XAxisMode.Linear);
+            _vm.RebuildDataGrid();
+        }
+        catch (Exception ex)
+        {
+            // Last-ditch net: never let a UI exception escape into the host.
+            _vm.Summary = $"Render failed: {ex.Message}";
+            try { _vm.BuildEmptyPlot(); _vm.RebuildDataGrid(); } catch { /* ignored */ }
+        }
     }
 
     private void SnpPanel_OnLoaded(object sender, RoutedEventArgs e)
     {
-        // Default selection is already set in ctor.
     }
 
     private void YDb_OnChecked(object sender, RoutedEventArgs e) =>
@@ -92,19 +114,13 @@ public enum XAxisMode
     Log
 }
 
-public class SnpRow
-{
-    public double Frequency { get; set; }
-    public List<string> Cells { get; set; } = new();
-}
-
 public class SnpViewModel
 {
     private readonly string _path;
     public string FileName { get; }
     public string Summary { get; set; } = string.Empty;
-    public ObservableCollection<string> Warnings { get; } = new();
-    public ObservableCollection<SnpRow> DataRows { get; } = new();
+    public System.Collections.ObjectModel.ObservableCollection<string> Warnings { get; } = new();
+    public DataTable DataTable { get; } = new();
 
     public PlotModel PlotModel { get; private set; } = new();
     public YAxisMode CurrentY { get; private set; } = YAxisMode.Db;
@@ -118,26 +134,26 @@ public class SnpViewModel
         FileName = Path.GetFileName(path);
     }
 
-    public void Parse()
+    public void ApplyDocument(TouchstoneDocument doc)
     {
-        _doc = TouchstoneParser.Parse(_path);
+        _doc = doc;
 
-        if (_doc.Points.Count == 0)
+        if (doc.Points.Count == 0)
         {
             Summary = "No data points parsed.";
-            return;
+        }
+        else
+        {
+            var fmin = doc.Points.First().Frequency;
+            var fmax = doc.Points.Last().Frequency;
+            Summary =
+                $"{doc.PortCount}-port · {doc.ParamType} · {doc.DataFormat} · " +
+                $"f ∈ [{fmin.ToString("G4", CultureInfo.InvariantCulture)}, " +
+                $"{fmax.ToString("G4", CultureInfo.InvariantCulture)}] {doc.FrequencyUnit} · " +
+                $"{doc.Points.Count} samples · R = {doc.ReferenceResistance} Ω";
         }
 
-        // Build summary
-        var fmin = _doc.Points.First().Frequency;
-        var fmax = _doc.Points.Last().Frequency;
-        Summary =
-            $"{_doc.PortCount}-port · {_doc.ParamType} · {_doc.DataFormat} · " +
-            $"f ∈ [{fmin.ToString("G4", System.Globalization.CultureInfo.InvariantCulture)}, " +
-            $"{fmax.ToString("G4", System.Globalization.CultureInfo.InvariantCulture)}] {_doc.FrequencyUnit} · " +
-            $"{_doc.Points.Count} samples · R = {_doc.ReferenceResistance} Ω";
-
-        foreach (var w in _doc.Warnings)
+        foreach (var w in doc.Warnings)
             Warnings.Add(w);
     }
 
@@ -230,42 +246,50 @@ public class SnpViewModel
 
     public void RebuildDataGrid()
     {
-        DataRows.Clear();
-        if (_doc is null) return;
+        DataTable.Reset();
+        if (_doc is null || _doc.Points.Count == 0)
+            return;
 
         int n = _doc.PortCount;
-        const int maxRows = 1000; // keep preview responsive
+
+        var freqCol = new DataColumn($"freq ({_doc.FrequencyUnit})", typeof(double));
+        DataTable.Columns.Add(freqCol);
+
+        for (int i = 0; i < n; i++)
+        {
+            for (int j = 0; j < n; j++)
+            {
+                var pij = $"{_doc.ParamType}{i + 1}{j + 1}";
+                DataTable.Columns.Add(new DataColumn($"{pij} re", typeof(double)));
+                DataTable.Columns.Add(new DataColumn($"{pij} im", typeof(double)));
+                DataTable.Columns.Add(new DataColumn($"{pij} dB", typeof(double)));
+            }
+        }
+
+        const int maxRows = 1000;
         int take = Math.Min(_doc.Points.Count, maxRows);
         bool truncated = _doc.Points.Count > maxRows;
 
         for (int k = 0; k < take; k++)
         {
             var p = _doc.Points[k];
-            var row = new SnpRow
-            {
-                Frequency = p.Frequency
-            };
-            row.Cells.Add(p.Frequency.ToString("G6", System.Globalization.CultureInfo.InvariantCulture));
+            var row = DataTable.NewRow();
+            row[0] = p.Frequency;
+            int col = 1;
             for (int i = 0; i < n; i++)
             {
                 for (int j = 0; j < n; j++)
                 {
                     var c = p.S[i, j];
-                    row.Cells.Add($"{c.Real.ToString("G4", System.Globalization.CultureInfo.InvariantCulture)}, " +
-                                  $"{c.Imaginary.ToString("G4", System.Globalization.CultureInfo.InvariantCulture)}");
-                    row.Cells.Add($"{c.Magnitude.ToString("G4", System.Globalization.CultureInfo.InvariantCulture)}, " +
-                                  $"{(c.Phase * 180.0 / Math.PI).ToString("G4", System.Globalization.CultureInfo.InvariantCulture)}°");
-                    row.Cells.Add(c.Magnitude > 0
-                        ? (20.0 * Math.Log10(c.Magnitude)).ToString("F2", System.Globalization.CultureInfo.InvariantCulture) + " dB"
-                        : "-∞ dB");
+                    row[col++] = c.Real;
+                    row[col++] = c.Imaginary;
+                    row[col++] = c.Magnitude > 0 ? 20.0 * Math.Log10(c.Magnitude) : double.NaN;
                 }
             }
-            DataRows.Add(row);
+            DataTable.Rows.Add(row);
         }
 
         if (truncated)
-        {
             Warnings.Add($"Preview truncated to first {maxRows} rows of {_doc.Points.Count}.");
-        }
     }
 }

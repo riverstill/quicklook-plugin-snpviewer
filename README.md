@@ -76,9 +76,21 @@ included because it is provided by the host QuickLook process.
 
 ## Installing
 
-1. Quit QuickLook.
-2. Copy the contents of the `.qlplugin` package into
-   `%LocalAppData%\QuickLook\QuickLook.Plugin.SnpViewer\`.
+The exact plugin folder depends on which QuickLook distribution you use.
+The [official wiki](https://github.com/QL-Win/QuickLook/wiki/Differences-Between-Distributions#user-data-location)
+lists them all; the common ones are:
+
+| Distribution | Plugin folder |
+|---|---|
+| **Installer** (4.x, .exe / .msi) | `%AppData%\pooi.moe\QuickLook\QuickLook.Plugin\QuickLook.Plugin.SnpViewer\` |
+| **Microsoft Store** | `%LocalAppData%\Packages\pooi.moe.QuickLook_...\LocalCache\Roaming\pooi.moe\QuickLook\QuickLook.Plugin\QuickLook.Plugin.SnpViewer\` |
+| **Scoop** | `%UserProfile%\scoop\apps\quicklook\current\QuickLook.Plugin\QuickLook.Plugin.SnpViewer\` |
+
+To install manually:
+
+1. Quit QuickLook (tray icon → Quit).
+2. Unzip the `.qlplugin` file and copy its contents into the
+   `QuickLook.Plugin.SnpViewer` folder above (create the folder if needed).
 3. Start QuickLook.
 4. Select a `.s2p` file (or any other Touchstone file) in File Explorer and
    press **Space**.
