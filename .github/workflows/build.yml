@@ -31,9 +31,6 @@ jobs:
         with:
           dotnet-version: 8.0.x
 
-      - name: Add MSBuild to PATH
-        uses: microsoft/setup-msbuild@v2
-
       - name: Restore NuGet packages
         run: dotnet restore QuickLook.Plugin.SnpViewer.sln
 
@@ -44,28 +41,13 @@ jobs:
               -c ${{ matrix.configuration }} `
               -p:Platform="${{ matrix.platform == 'AnyCPU' && 'Any CPU' || matrix.platform }}"
 
-      - name: Locate build output
-        id: locate
-        shell: pwsh
-        run: |
-          $dll = Get-ChildItem -Path $env:GITHUB_WORKSPACE -Recurse -Filter "QuickLook.Plugin.SnpViewer.dll" -ErrorAction SilentlyContinue | Select-Object -First 1
-          if (-not $dll) { throw "Could not find QuickLook.Plugin.SnpViewer.dll anywhere under $env:GITHUB_WORKSPACE" }
-          $dir = $dll.DirectoryName
-          "Build output dir: $dir"
-          Get-ChildItem $dir | Select-Object Name, Length | Format-Table -AutoSize
-          "build_dir=$dir" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
-
+      # Publish + zip via the same script used for local packaging, so CI
+      # and local builds can never drift apart. Publish (not raw build
+      # output) is used because it reliably stages NuGet dependency
+      # assemblies such as OxyPlot next to the plugin DLL.
       - name: Package as .qlplugin
         shell: pwsh
-        env:
-          BUILD_DIR: ${{ steps.locate.outputs.build_dir }}
-        run: |
-          $src = $env:BUILD_DIR
-          $dst = Join-Path $env:GITHUB_WORKSPACE "QuickLook.Plugin.SnpViewer.qlplugin"
-          if (-not (Test-Path $src)) { throw "Source dir not found: $src" }
-          if (Test-Path $dst) { Remove-Item $dst -Force }
-          Compress-Archive -Path (Join-Path $src "*") -DestinationPath $dst -Force
-          Get-Item $dst | Select-Object Name, Length | Format-Table -AutoSize
+        run: ./package.ps1 -Configuration ${{ matrix.configuration }} -Platform ${{ matrix.platform }}
 
       - name: Upload .qlplugin artifact
         uses: actions/upload-artifact@v4

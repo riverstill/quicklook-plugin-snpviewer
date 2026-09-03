@@ -86,19 +86,10 @@
     </ItemGroup>
 
     <ItemGroup>
-        <None Update="Translations.config">
+        <Content Include="Translations.config">
             <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-        </None>
+            <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+        </Content>
     </ItemGroup>
-
-    <Target Name="CopyTransitiveAssemblies" AfterTargets="Build">
-        <ItemGroup>
-            <_TransitiveAssemblies Include="@(ReferenceCopyLocalPaths)"
-                                   Condition="'%(ReferenceCopyLocalPaths.ReferenceSourceTarget)' == 'PackageReference' Or '%(ReferenceCopyLocalPaths.Implementation)' != ''" />
-        </ItemGroup>
-        <Copy SourceFiles="@(_TransitiveAssemblies)"
-              DestinationFolder="$(OutputPath)"
-              SkipUnchangedFiles="true" />
-    </Target>
 
 </Project>

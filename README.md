@@ -44,9 +44,9 @@ response.
 ## Building
 
 ```cmd
-:: Clone (no submodules needed any more)
-git clone https://github.com/your-name/QuickLook.Plugin.SnpViewer.git
-cd QuickLook.Plugin.SnpViewer
+:: Clone (no submodules needed)
+git clone https://github.com/riverstill/quicklook-plugin-snpviewer.git
+cd quicklook-plugin-snpviewer
 
 :: Build (either of the following works)
 build.cmd                                :: MSBuild / dotnet, Release|AnyCPU
@@ -58,23 +58,20 @@ The build output is written to
 
 ## Packaging as a `.qlplugin`
 
-A `.qlplugin` file is a ZIP containing the build output. Use the PowerShell
-helper:
+A `.qlplugin` file is a ZIP. Build it with the PowerShell helper (requires
+the .NET SDK on `PATH`):
 
 ```powershell
 package.ps1 -Configuration Release -Platform AnyCPU
 ```
 
-This produces `QuickLook.Plugin.SnpViewer.qlplugin`. Manually it is just:
+Under the hood this runs `dotnet publish` (which reliably stages all NuGet
+dependency assemblies next to the plugin DLL) and then zips a staged subset.
+Do **not** zip the raw `Build\...` output directory directly — it does not
+reliably contain the dependency assemblies.
 
-```powershell
-Compress-Archive -Path .\Build\Release\QuickLook.Plugin\QuickLook.Plugin.SnpViewer\* `
-                 -DestinationPath .\QuickLook.Plugin.SnpViewer.qlplugin `
-                 -Force
-```
-
-The resulting archive contains the plugin DLL, `OxyPlot.Wpf.dll`,
-`OxyPlot.dll` and `Translations.config`. `QuickLook.Common.dll` is **not**
+The resulting archive contains the plugin DLL, the `OxyPlot*.dll` charting
+assemblies and `Translations.config`. `QuickLook.Common.dll` is **not**
 included because it is provided by the host QuickLook process.
 
 ## Installing
