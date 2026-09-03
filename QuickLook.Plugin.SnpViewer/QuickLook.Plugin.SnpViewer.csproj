@@ -91,4 +91,14 @@
         </None>
     </ItemGroup>
 
+    <Target Name="CopyTransitiveAssemblies" AfterTargets="Build">
+        <ItemGroup>
+            <_TransitiveAssemblies Include="@(ReferenceCopyLocalPaths)"
+                                   Condition="'%(ReferenceCopyLocalPaths.ReferenceSourceTarget)' == 'PackageReference' Or '%(ReferenceCopyLocalPaths.Implementation)' != ''" />
+        </ItemGroup>
+        <Copy SourceFiles="@(_TransitiveAssemblies)"
+              DestinationFolder="$(OutputPath)"
+              SkipUnchangedFiles="true" />
+    </Target>
+
 </Project>
