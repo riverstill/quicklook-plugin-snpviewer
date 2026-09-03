@@ -12,6 +12,7 @@
         <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
         <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
         <GenerateTargetFrameworkAttribute>false</GenerateTargetFrameworkAttribute>
+        <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
         <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
         <ProjectGuid>{B6B0B3E3-7B6E-4D2F-9B5C-9C0F1A2B3C4D}</ProjectGuid>
         <PlatformTarget>AnyCPU</PlatformTarget>
