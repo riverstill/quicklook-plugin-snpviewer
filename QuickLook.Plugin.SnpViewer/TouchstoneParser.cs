@@ -30,35 +30,44 @@ public static class TouchstoneParser
 
         var doc = new TouchstoneDocument { FilePath = path };
 
-        using var reader = new StreamReader(path);
-
-        // Sniff first non-empty line to detect a Touchstone header/option line.
-        string first = PeekFirstNonEmptyLine(reader);
-        if (first is null)
-        {
-            doc.Warnings.Add("File is empty.");
-            return doc;
-        }
-
-        bool looksTouchstone = LooksLikeTouchstone(first, doc);
-        if (!looksTouchstone)
-        {
-            throw new InvalidDataException("Not a Touchstone file (no recognizable option or data line).");
-        }
-
         // Determine initial port count from the file name (if available).
         doc.PortCount = GuessPortCountFromFileName(path);
         if (doc.PortCount == 0)
             doc.PortCount = 2; // sensible default
 
-        int lineNo = 0;
-        string? line;
-        bool inNoise = false;
+        // Read entire file so we can sniff the first non-empty line without
+        // losing it from the main parse loop.
+        var allLines = File.ReadAllLines(path);
+        if (allLines.Length == 0)
+        {
+            doc.Warnings.Add("File is empty.");
+            return doc;
+        }
 
-        while ((line = reader.ReadLine()) is not null)
+        int firstIdx = -1;
+        for (int i = 0; i < allLines.Length; i++)
+        {
+            if (!string.IsNullOrWhiteSpace(allLines[i])) { firstIdx = i; break; }
+        }
+        if (firstIdx < 0)
+        {
+            doc.Warnings.Add("File is empty.");
+            return doc;
+        }
+
+        string first = allLines[firstIdx].Trim();
+        if (!LooksLikeTouchstone(first))
+        {
+            throw new InvalidDataException("Not a Touchstone file (no recognizable option or data line).");
+        }
+
+        int lineNo = 0;
+        bool inNoise = false;
+        for (int idx = firstIdx; idx < allLines.Length; idx++)
         {
             lineNo++;
-            var trimmed = line.Trim();
+            var raw = allLines[idx];
+            var trimmed = raw.Trim();
             if (trimmed.Length == 0) continue;
             if (trimmed[0] == '!') continue; // comment
 
@@ -99,15 +108,12 @@ public static class TouchstoneParser
         }
     }
 
-    private static bool LooksLikeTouchstone(string first, TouchstoneDocument doc)
+    private static bool LooksLikeTouchstone(string first)
     {
         var t = first.Trim();
         // v1: comment-style header "freq mag angle" (rare). v2: "# GHz S RI R 50"
         if (t.StartsWith("#") || t.StartsWith("!"))
-        {
-            ParseOptionLine(t, doc);
             return true;
-        }
 
         // Otherwise expect first token to be a number (frequency)
         var firstTok = t.Split(new[] { ' ', '\t' }, StringSplitOptions.RemoveEmptyEntries).FirstOrDefault();
