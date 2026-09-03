@@ -170,11 +170,7 @@ public class SnpViewModel
             Title = $"{FileName} — {y} view",
             TitleColor = OxyColor.FromRgb(0xE0, 0xE0, 0xE0),
             PlotAreaBackground = OxyColor.FromRgb(0xFF, 0xFF, 0xFF),
-            TextColor = OxyColor.FromRgb(0x20, 0x20, 0x20),
-            IsLegendEnabled = true,
-            LegendPosition = LegendPosition.RightTop,
-            LegendBackground = OxyColor.FromAColor(0xC0, OxyColors.White),
-            LegendBorder = OxyColors.Gray
+            TextColor = OxyColor.FromRgb(0x20, 0x20, 0x20)
         };
 
         pm.Axes.Add(x == XAxisMode.Log

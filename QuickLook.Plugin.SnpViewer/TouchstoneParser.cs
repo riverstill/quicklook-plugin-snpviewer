@@ -242,8 +242,8 @@ public static class TouchstoneParser
         var values = new List<double>(tokens.Length - 1);
         for (int i = 1; i < tokens.Length; i++)
         {
-            if (double.TryParse(tokens[i], NumberStyles.Float, CultureInfo.InvariantCulture, out var v))
-                values.Add(v);
+            if (double.TryParse(tokens[i], NumberStyles.Float, CultureInfo.InvariantCulture, out var parsed))
+                values.Add(parsed);
             else
                 doc.Warnings.Add($"Line {lineNo}: non-numeric token '{tokens[i]}' ignored.");
         }
