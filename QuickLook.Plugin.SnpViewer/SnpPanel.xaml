@@ -64,7 +64,7 @@
 
         <!-- Plot -->
         <Border Grid.Row="1" Background="#FFFFFF" CornerRadius="4" Padding="4">
-            <oxy:PlotView Model="{Binding PlotModel}" />
+            <oxy:PlotView x:Name="Plot" />
         </Border>
 
         <!-- Tabs / units toggle -->

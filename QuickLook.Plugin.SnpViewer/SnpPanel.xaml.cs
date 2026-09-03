@@ -1,11 +1,13 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 using System;
+using System.ComponentModel;
 using System.Data;
 using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Numerics;
+using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
@@ -64,6 +66,13 @@ public partial class SnpPanel : UserControl
             XLinear.IsChecked = true;
             _vm.RebuildPlot(YAxisMode.Db, XAxisMode.Linear);
             _vm.RebuildDataGrid();
+
+            // Push the freshly-built PlotModel to the PlotView directly.
+            // Going via DataContext/Binding is racy on first show because
+            // the binding may not yet have observed the initial value, and
+            // subsequent rebuilds need to invalidate the visual.
+            Plot.Model = _vm.PlotModel;
+            Plot.InvalidatePlot();
         }
         catch (Exception ex)
         {
@@ -78,25 +87,33 @@ public partial class SnpPanel : UserControl
     }
 
     private void YDb_OnChecked(object sender, RoutedEventArgs e) =>
-        _vm?.RebuildPlot(YAxisMode.Db, _vm.CurrentX);
+        SyncPlot(() => _vm?.RebuildPlot(YAxisMode.Db, _vm.CurrentX));
 
     private void YMagnitude_OnChecked(object sender, RoutedEventArgs e) =>
-        _vm?.RebuildPlot(YAxisMode.Magnitude, _vm.CurrentX);
+        SyncPlot(() => _vm?.RebuildPlot(YAxisMode.Magnitude, _vm.CurrentX));
 
     private void YReal_OnChecked(object sender, RoutedEventArgs e) =>
-        _vm?.RebuildPlot(YAxisMode.Real, _vm.CurrentX);
+        SyncPlot(() => _vm?.RebuildPlot(YAxisMode.Real, _vm.CurrentX));
 
     private void YImag_OnChecked(object sender, RoutedEventArgs e) =>
-        _vm?.RebuildPlot(YAxisMode.Imaginary, _vm.CurrentX);
+        SyncPlot(() => _vm?.RebuildPlot(YAxisMode.Imaginary, _vm.CurrentX));
 
     private void YPhase_OnChecked(object sender, RoutedEventArgs e) =>
-        _vm?.RebuildPlot(YAxisMode.Phase, _vm.CurrentX);
+        SyncPlot(() => _vm?.RebuildPlot(YAxisMode.Phase, _vm.CurrentX));
 
     private void XLinear_OnChecked(object sender, RoutedEventArgs e) =>
-        _vm?.RebuildPlot(_vm.CurrentY, XAxisMode.Linear);
+        SyncPlot(() => _vm?.RebuildPlot(_vm.CurrentY, XAxisMode.Linear));
 
     private void XLog_OnChecked(object sender, RoutedEventArgs e) =>
-        _vm?.RebuildPlot(_vm.CurrentY, XAxisMode.Log);
+        SyncPlot(() => _vm?.RebuildPlot(_vm.CurrentY, XAxisMode.Log));
+
+    private void SyncPlot(Action? rebuild)
+    {
+        if (rebuild is null || _vm is null) return;
+        rebuild();
+        Plot.Model = _vm.PlotModel;
+        Plot.InvalidatePlot();
+    }
 }
 
 public enum YAxisMode
@@ -114,7 +131,7 @@ public enum XAxisMode
     Log
 }
 
-public class SnpViewModel
+public class SnpViewModel : INotifyPropertyChanged
 {
     private readonly string _path;
     public string FileName { get; }
@@ -122,7 +139,18 @@ public class SnpViewModel
     public System.Collections.ObjectModel.ObservableCollection<string> Warnings { get; } = new();
     public DataTable DataTable { get; } = new();
 
-    public PlotModel PlotModel { get; private set; } = new();
+    private PlotModel _plotModel = new();
+    public PlotModel PlotModel
+    {
+        get => _plotModel;
+        private set
+        {
+            if (ReferenceEquals(_plotModel, value)) return;
+            _plotModel = value;
+            OnPropertyChanged();
+        }
+    }
+
     public YAxisMode CurrentY { get; private set; } = YAxisMode.Db;
     public XAxisMode CurrentX { get; private set; } = XAxisMode.Linear;
 
@@ -133,6 +161,11 @@ public class SnpViewModel
         _path = path;
         FileName = Path.GetFileName(path);
     }
+
+    public event PropertyChangedEventHandler? PropertyChanged;
+
+    private void OnPropertyChanged([CallerMemberName] string? name = null) =>
+        PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
 
     public void ApplyDocument(TouchstoneDocument doc)
     {
@@ -239,6 +272,18 @@ public class SnpViewModel
                 pm.Series.Add(series);
                 colorIdx++;
             }
+        }
+
+        // Lock the dB scale to a sensible default (S11 typically -20..0 dB,
+        // S21 in passband near 0 dB). Without this OxyPlot may pick an
+        // autoscale that hides the data when log of small magnitudes yields
+        // very negative values.
+        if (y == YAxisMode.Db)
+        {
+            var ya = pm.Axes.OfType<LinearAxis>().First(a => a.Position == AxisPosition.Left);
+            ya.Minimum = -60;
+            ya.Maximum = 5;
+            ya.MajorStep = 10;
         }
 
         PlotModel = pm;
