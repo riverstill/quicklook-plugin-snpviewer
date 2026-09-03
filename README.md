@@ -28,45 +28,54 @@ response.
 .s1p .s2p .s3p .s4p .s5p .s6p .s7p .s8p .snp .ts
 ```
 
+## Prerequisites
+
+- **Windows** with the **.NET Framework 4.6.2** development pack installed
+  (ships with Visual Studio 2017/2019/2022 "Desktop development with C++"
+  workload, or can be added separately as
+  *Microsoft.NETFramework.ReferenceAssemblies.net462*).
+- One of:
+  - **MSBuild** (bundled with Visual Studio or Build Tools for Visual Studio)
+  - **.NET SDK 6.0 or newer** with `dotnet` on `PATH`
+
+> OxyPlot and QuickLook.Common are pulled in automatically as NuGet
+> dependencies — there is nothing else to install.
+
 ## Building
 
-The plugin targets **.NET Framework 4.6.2** with WPF, mirroring the
-QuickLook main project.
-
 ```cmd
-:: 1. Clone with submodules (QuickLook.Common is consumed as a submodule)
-git clone --recurse-submodules https://github.com/your-name/QuickLook.Plugin.SnpViewer.git
+:: Clone (no submodules needed any more)
+git clone https://github.com/your-name/QuickLook.Plugin.SnpViewer.git
 cd QuickLook.Plugin.SnpViewer
 
-:: 2a. Build with MSBuild
-msbuild QuickLook.Plugin.SnpViewer.sln /p:Configuration=Release /p:Platform=AnyCPU
-
-:: 2b. Or with dotnet SDK
+:: Build (either of the following works)
+build.cmd                                :: MSBuild / dotnet, Release|AnyCPU
 dotnet build QuickLook.Plugin.SnpViewer.sln -c Release
 ```
 
-The output DLL is written to `Build\Release\QuickLook.Plugin\QuickLook.Plugin.SnpViewer\`.
+The build output is written to
+`Build\Release\QuickLook.Plugin\QuickLook.Plugin.SnpViewer\`.
 
 ## Packaging as a `.qlplugin`
 
-A `.qlplugin` file is a ZIP with the following layout:
+A `.qlplugin` file is a ZIP containing the build output. Use the PowerShell
+helper:
 
-```
-QuickLook.Plugin.SnpViewer.qlplugin/
-├── QuickLook.Plugin.SnpViewer.dll
-├── Translations.config
-├── OxyPlot.dll
-├── OxyPlot.Wpf.dll
-└── ...
+```powershell
+package.ps1 -Configuration Release -Platform AnyCPU
 ```
 
-Use the PowerShell script:
+This produces `QuickLook.Plugin.SnpViewer.qlplugin`. Manually it is just:
 
 ```powershell
 Compress-Archive -Path .\Build\Release\QuickLook.Plugin\QuickLook.Plugin.SnpViewer\* `
                  -DestinationPath .\QuickLook.Plugin.SnpViewer.qlplugin `
                  -Force
 ```
+
+The resulting archive contains the plugin DLL, `OxyPlot.Wpf.dll`,
+`OxyPlot.dll` and `Translations.config`. `QuickLook.Common.dll` is **not**
+included because it is provided by the host QuickLook process.
 
 ## Installing
 
@@ -90,7 +99,6 @@ expected numerical values.
 
 ```
 .
-├── QuickLook.Common/                     # git submodule of QL-Win/QuickLook
 ├── QuickLook.Plugin.SnpViewer/
 │   ├── Plugin.cs                         # IViewer implementation
 │   ├── Plugin.MoreMenu.cs                # IMoreMenu implementation
@@ -101,11 +109,12 @@ expected numerical values.
 │   ├── Properties/AssemblyInfo.cs
 │   ├── Properties/GitVersion.cs
 │   └── QuickLook.Plugin.SnpViewer.csproj
-├── samples/                              # Test fixtures
+├── samples/                              # Test fixtures (.s1p / .s2p)
 ├── tests/                                # xUnit tests
 ├── .gitignore
-├── .gitmodules
 ├── QuickLook.Plugin.SnpViewer.sln
+├── build.cmd / build.sh                  # Convenience build wrappers
+├── package.ps1                           # Builds the .qlplugin
 └── LICENSE-GPL.txt
 ```
 

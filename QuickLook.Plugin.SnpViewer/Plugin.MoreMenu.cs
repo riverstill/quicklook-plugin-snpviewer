@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
+using QuickLook.Common.Commands;
 using QuickLook.Common.Plugin;
 using QuickLook.Common.Plugin.MoreMenu;
 using System;
@@ -7,7 +8,6 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Windows;
-using System.Windows.Input;
 
 namespace QuickLook.Plugin.SnpViewer;
 
@@ -57,18 +57,5 @@ public sealed partial class Plugin : IMoreMenu
                 })
             }
         };
-    }
-
-    private sealed class RelayCommand : ICommand
-    {
-        private readonly Action _execute;
-        public RelayCommand(Action execute) => _execute = execute;
-        public bool CanExecute(object parameter) => true;
-        public void Execute(object parameter) => _execute();
-        public event EventHandler CanExecuteChanged
-        {
-            add { }
-            remove { }
-        }
     }
 }

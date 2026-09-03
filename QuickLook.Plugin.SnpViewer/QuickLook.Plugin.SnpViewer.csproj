@@ -75,28 +75,13 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <PackageReference Include="OxyPlot.Wpf" Version="2.2.0">
-            <PrivateAssets>all</PrivateAssets>
-        </PackageReference>
+        <PackageReference Include="OxyPlot.Wpf" Version="2.2.0" />
+        <PackageReference Include="QuickLook.Common" Version="4.5.0" />
     </ItemGroup>
 
     <ItemGroup>
         <Reference Include="Microsoft.CSharp" />
         <Reference Include="WindowsBase" />
-    </ItemGroup>
-
-    <ItemGroup>
-        <ProjectReference Include="..\QuickLook.Common\QuickLook.Common\QuickLook.Common.csproj">
-            <Project>{85FDD6BA-871D-46C8-BD64-F6BB0CB5EA95}</Project>
-            <Name>QuickLook.Common</Name>
-            <Private>False</Private>
-        </ProjectReference>
-    </ItemGroup>
-
-    <ItemGroup>
-        <Compile Include="..\QuickLook.Common\QuickLook.Common\Properties\GitVersion.cs" Condition="Exists('..\QuickLook.Common\QuickLook.Common\Properties\GitVersion.cs')">
-            <Link>Properties\GitVersion.cs</Link>
-        </Compile>
     </ItemGroup>
 
     <ItemGroup>
