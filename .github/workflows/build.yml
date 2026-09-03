@@ -47,17 +47,18 @@ jobs:
       - name: Verify output
         shell: pwsh
         run: |
-          $dir = "Build/${{ matrix.configuration }}/QuickLook.Plugin/QuickLook.Plugin.SnpViewer"
+          $dir = Join-Path $env:GITHUB_WORKSPACE "Build/${{ matrix.configuration }}/QuickLook.Plugin/QuickLook.Plugin.SnpViewer"
           if (-not (Test-Path $dir)) { throw "Build output not found at $dir" }
           Get-ChildItem $dir | Select-Object Name, Length | Format-Table -AutoSize
 
       - name: Package as .qlplugin
         shell: pwsh
         run: |
-          $src = "Build/${{ matrix.configuration }}/QuickLook.Plugin/QuickLook.Plugin.SnpViewer"
-          $dst = "QuickLook.Plugin.SnpViewer.qlplugin"
+          $src = Join-Path $env:GITHUB_WORKSPACE "Build/${{ matrix.configuration }}/QuickLook.Plugin/QuickLook.Plugin.SnpViewer"
+          $dst = Join-Path $env:GITHUB_WORKSPACE "QuickLook.Plugin.SnpViewer.qlplugin"
+          if (-not (Test-Path $src)) { throw "Source dir not found: $src" }
           if (Test-Path $dst) { Remove-Item $dst -Force }
-          Compress-Archive -Path "$src/*" -DestinationPath $dst -Force
+          Compress-Archive -Path (Join-Path $src "*") -DestinationPath $dst -Force
           Get-Item $dst | Select-Object Name, Length | Format-Table -AutoSize
 
       - name: Upload .qlplugin artifact
