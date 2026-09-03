@@ -132,7 +132,7 @@ public sealed partial class Plugin : IViewer
 
     public void Prepare(string path, ContextObject context)
     {
-        context.PreferredSize = new Size(1100, 720);
+        context.PreferredSize = new Size(1150, 880);
     }
 
     public void View(string path, ContextObject context)

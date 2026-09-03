@@ -10,6 +10,11 @@
 #   - QuickLook.Plugin.SnpViewer.dll
 #   - OxyPlot*.dll (charting engine, shipped with the plugin)
 #   - Translations.config
+#   - QuickLook.Plugin.Metadata.config (REQUIRED by QuickLook's built-in
+#     PluginInstaller: spacebar-install reads /Metadata/Namespace (must
+#     start with "QuickLook.Plugin.") and /Metadata/Version from it.
+#     Without this file the installer shows "Invalid plugin." /
+#     "Version not defined".)
 # Deliberately EXCLUDED: QuickLook.Common.dll (provided by the host
 # QuickLook process), *.pdb, *.xml docs and build caches.
 
@@ -51,6 +56,23 @@ Get-ChildItem -Path $publishDir -Filter "*.dll" |
 $translations = Join-Path $publishDir "Translations.config"
 if (-not (Test-Path $translations)) { throw "Translations.config missing from publish output at $publishDir" }
 Copy-Item -Path $translations -Destination $stageDir -Force
+
+# QuickLook.Plugin.Metadata.config (REQUIRED for spacebar-install).
+# The installer (QuickLook.Plugin.PluginInstaller) reads /Metadata/Namespace
+# and /Metadata/Version from the entry named exactly this at the zip root.
+$metadata = Join-Path $publishDir "QuickLook.Plugin.Metadata.config"
+if (-not (Test-Path $metadata)) { throw "QuickLook.Plugin.Metadata.config missing from publish output at $publishDir" }
+[xml]$metaXml = Get-Content -Raw $metadata
+$ns = $metaXml.SelectSingleNode("/Metadata/Namespace")?.InnerText
+$ver = $metaXml.SelectSingleNode("/Metadata/Version")?.InnerText
+if ([string]::IsNullOrWhiteSpace($ns) -or -not $ns.StartsWith("QuickLook.Plugin.")) {
+    throw "Invalid /Metadata/Namespace '$ns' - must start with 'QuickLook.Plugin.' or spacebar-install shows 'Invalid plugin.'"
+}
+if ([string]::IsNullOrWhiteSpace($ver)) {
+    throw "Missing /Metadata/Version - spacebar-install would show 'Version not defined'."
+}
+Write-Host "Plugin metadata: $ns, version $ver"
+Copy-Item -Path $metadata -Destination $stageDir -Force
 
 Write-Host "Staged files:"
 Get-ChildItem $stageDir | Select-Object Name, Length | Format-Table -AutoSize | Out-String | Write-Host

@@ -42,9 +42,9 @@
     <Grid Margin="12">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
-            <RowDefinition Height="*" />
+            <RowDefinition Height="*" MinHeight="380" />
             <RowDefinition Height="Auto" />
-            <RowDefinition Height="180" />
+            <RowDefinition Height="150" />
         </Grid.RowDefinitions>
 
         <!-- Header summary -->
