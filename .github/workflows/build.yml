@@ -26,28 +26,23 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Setup .NET Framework 4.6.2 reference assemblies
-        run: |
-          nuget install Microsoft.NETFramework.ReferenceAssemblies.net462 `
-              -Version 1.0.3 -OutputDirectory ${{ github.workspace }}/.refasm `
-              -PackageSaveMode nuspec
+      - name: Setup .NET SDK
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
 
-      - name: Setup MSBuild
+      - name: Add MSBuild to PATH
         uses: microsoft/setup-msbuild@v2
 
       - name: Restore NuGet packages
-        shell: pwsh
-        run: |
-          nuget restore QuickLook.Plugin.SnpViewer.sln `
-              -PackagesDirectory ${{ github.workspace }}/.packages
+        run: dotnet restore QuickLook.Plugin.SnpViewer.sln
 
       - name: Build solution
         run: |
-          msbuild QuickLook.Plugin.SnpViewer.sln `
-              /p:Configuration=${{ matrix.configuration }} `
-              /p:Platform="${{ matrix.platform == 'AnyCPU' && 'Any CPU' || matrix.platform }}" `
-              /p:RestorePackagesPath=${{ github.workspace }}/.packages `
-              /p:FrameworkPathOverride=${{ github.workspace }}/.refasm/Microsoft.NETFramework.ReferenceAssemblies.net462/lib/4.6.2
+          dotnet build QuickLook.Plugin.SnpViewer.sln `
+              --no-restore `
+              -c ${{ matrix.configuration }} `
+              -p:Platform="${{ matrix.platform == 'AnyCPU' && 'Any CPU' || matrix.platform }}"
 
       - name: Verify output
         shell: pwsh
@@ -87,19 +82,8 @@ jobs:
         with:
           dotnet-version: 8.0.x
 
-      - name: Setup .NET Framework 4.6.2 reference assemblies
-        run: |
-          nuget install Microsoft.NETFramework.ReferenceAssemblies.net462 `
-              -Version 1.0.3 -OutputDirectory ${{ github.workspace }}/.refasm `
-              -PackageSaveMode nuspec
-
       - name: Restore
-        run: |
-          dotnet restore tests/QuickLook.Plugin.SnpViewer.Tests.csproj `
-              /p:FrameworkPathOverride=${{ github.workspace }}/.refasm/Microsoft.NETFramework.ReferenceAssemblies.net462/lib/4.6.2
+        run: dotnet restore tests/QuickLook.Plugin.SnpViewer.Tests.csproj
 
       - name: Test
-        run: |
-          dotnet test tests/QuickLook.Plugin.SnpViewer.Tests.csproj `
-              --no-restore `
-              /p:FrameworkPathOverride=${{ github.workspace }}/.refasm/Microsoft.NETFramework.ReferenceAssemblies.net462/lib/4.6.2
+        run: dotnet test tests/QuickLook.Plugin.SnpViewer.Tests.csproj --no-restore --logger "console;verbosity=normal"
