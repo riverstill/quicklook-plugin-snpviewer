@@ -27,7 +27,7 @@ internal static class ThemeHelper
         }
     }
 
-    public static PlotTheme PlotTheme(bool light) => light ? PlotTheme.Light : PlotTheme.Dark;
+    public static PlotTheme ForTheme(bool light) => light ? PlotTheme.Light : PlotTheme.Dark;
 }
 
 /// <summary>

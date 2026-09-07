@@ -217,7 +217,7 @@ public class SnpViewModel : INotifyPropertyChanged
     {
         _path = path;
         FileName = Path.GetFileName(path);
-        _theme = ThemeHelper.PlotTheme(lightTheme);
+        _theme = ThemeHelper.ForTheme(lightTheme);
     }
 
     public event PropertyChangedEventHandler? PropertyChanged;
