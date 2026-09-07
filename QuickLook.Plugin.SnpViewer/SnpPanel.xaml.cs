@@ -298,8 +298,7 @@ public class SnpViewModel : INotifyPropertyChanged
             TitleColor = _theme.Fg,
             Background = _theme.Bg,
             PlotAreaBackground = _theme.Bg,
-            TextColor = _theme.Fg,
-            DefaultTrackerFormatString = "{0}\n{1}: {2:0.###}\n{3}: {4:0.###}"
+            TextColor = _theme.Fg
         };
         var xb = new LinearAxis { Position = AxisPosition.Bottom };
         var yl = new LinearAxis { Position = AxisPosition.Left };
@@ -329,8 +328,7 @@ public class SnpViewModel : INotifyPropertyChanged
             SubtitleColor = _theme.Fg,
             Background = _theme.Bg,
             PlotAreaBackground = _theme.Bg,
-            TextColor = _theme.Fg,
-            DefaultTrackerFormatString = "{0}\n{1}: {2:0.###}\n{3}: {4:0.###}"
+            TextColor = _theme.Fg
         };
         // Series carry Titles (S11, S21, ...); an explicit legend entry is
         // required in OxyPlot 2.x (the collection is empty by default).
