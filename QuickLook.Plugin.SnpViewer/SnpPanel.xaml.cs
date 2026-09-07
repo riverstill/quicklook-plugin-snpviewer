@@ -71,6 +71,10 @@ public partial class SnpPanel : UserControl
             SetBrush("TabCheckedBg", "#007ACC");
             SetBrush("TabHoverBg", light ? "#E5E5E5" : "#3E3E42");
             SetBrush("WarningFg", light ? "#9A6B00" : "#E0A800");
+            SetBrush("TrackerBg", light ? "#FFFFE0" : "#2D2D30");
+            SetBrush("TrackerBorder", light ? "#000000" : "#808080");
+            SetBrush("TrackerFg", light ? "#000000" : "#E0E0E0");
+            SetBrush("TrackerCrosshair", light ? "#808080" : "#808080");
         }
         catch (Exception ex)
         {
@@ -202,7 +206,12 @@ public partial class SnpPanel : UserControl
             WarningBar.Visibility = Visibility.Collapsed;
             return;
         }
-        WarningBar.Text = string.Join("   |   ", _vm.Warnings);
+        const int maxShown = 4;
+        var shown = _vm.Warnings.Take(maxShown).ToList();
+        var text = string.Join("   |   ", shown);
+        if (_vm.Warnings.Count > maxShown)
+            text += $"   |   (+{_vm.Warnings.Count - maxShown} more)";
+        WarningBar.Text = text;
         WarningBar.Visibility = Visibility.Visible;
     }
 }
@@ -384,6 +393,10 @@ public class SnpViewModel : INotifyPropertyChanged
         pm.Axes.Add(yAxis);
 
         int n = _doc.PortCount;
+        // Big files with tens of thousands of points freeze OxyPlot. Decimate
+        // the handful of points we actually plot while keeping the DataGrid's
+        // separate 1000-row cap.
+        int plotEvery = Math.Max(1, (int)Math.Ceiling((double)_doc.Points.Count / 4000));
         // Brightened for the dark background (matplotlib "tab" set with the
         // low-contrast brown swapped for yellow).
         var palette = new[]
@@ -412,8 +425,9 @@ public class SnpViewModel : INotifyPropertyChanged
                     TrackerFormatString = "{0}\nf = {2:0.###} {XAxis.Title}\n{3} = {4:0.###}"
                 };
 
-                foreach (var p in _doc.Points)
+                for (int k = 0; k < _doc.Points.Count; k += plotEvery)
                 {
+                    var p = _doc.Points[k];
                     var c = p.S[i, j];
                     double yv = y switch
                     {

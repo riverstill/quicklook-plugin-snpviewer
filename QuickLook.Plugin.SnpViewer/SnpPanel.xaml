@@ -23,6 +23,12 @@
         <SolidColorBrush x:Key="TabCheckedBg" Color="#007ACC" />
         <SolidColorBrush x:Key="TabHoverBg" Color="#3E3E42" />
         <SolidColorBrush x:Key="WarningFg" Color="#E0A800" />
+        <!-- Tracker (data-point tooltip) box colors, swapped per theme in code
+             while the template itself stays fixed. -->
+        <SolidColorBrush x:Key="TrackerBg" Color="#2D2D30" />
+        <SolidColorBrush x:Key="TrackerBorder" Color="#808080" />
+        <SolidColorBrush x:Key="TrackerFg" Color="#E0E0E0" />
+        <SolidColorBrush x:Key="TrackerCrosshair" Color="#808080" />
 
         <Style TargetType="DataGrid">
             <Setter Property="Background" Value="{DynamicResource GridRowBg}" />
@@ -91,7 +97,28 @@
                    FontSize="11" Margin="0,0,0,6" />
         <!-- Plot -->
         <Border Grid.Row="1" Background="{DynamicResource PanelBg}" CornerRadius="4" Padding="4">
-            <oxy:PlotView x:Name="Plot" />
+            <oxy:PlotView x:Name="Plot">
+                <!-- Tracker (hover tooltip) template. The stone-cold default
+                     is a pale-yellow box whose TextBlock has no explicit
+                     Foreground, so it inherits PanelFg (near-white in dark
+                     mode) -> white-on-yellow, unreadable. Give it themed,
+                     explicit colors via DynamicResource. -->
+                <oxy:PlotView.DefaultTrackerTemplate>
+                    <ControlTemplate>
+                        <oxy:TrackerControl Position="{Binding Position}"
+                                            LineExtents="{Binding PlotModel.PlotArea}"
+                                            Background="{DynamicResource TrackerBg}"
+                                            BorderBrush="{DynamicResource TrackerBorder}"
+                                            BorderThickness="1"
+                                            LineStroke="{DynamicResource TrackerCrosshair}">
+                            <oxy:TrackerControl.Content>
+                                <TextBlock Text="{Binding}" Margin="7"
+                                           Foreground="{DynamicResource TrackerFg}" FontSize="12" />
+                            </oxy:TrackerControl.Content>
+                        </oxy:TrackerControl>
+                    </ControlTemplate>
+                </oxy:PlotView.DefaultTrackerTemplate>
+            </oxy:PlotView>
         </Border>
 
         <!-- Axis options as flat tabs -->

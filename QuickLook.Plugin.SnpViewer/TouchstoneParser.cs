@@ -61,8 +61,27 @@ public static class TouchstoneParser
             throw new InvalidDataException("Not a Touchstone file (no recognizable option or data line).");
         }
 
+        // Multi-line data support: Touchstone allows one point (frequency +
+        // n^2 pairs) to wrap across several physical lines, most commonly for
+        // n > 2. We buffer values from continuation lines until the point is
+        // complete, then commit it. A brand-new point starts only on a line
+        // whose first token is a frequency AND the previous point is complete
+        // (or no point is in progress).
         int lineNo = 0;
         bool inNoise = false;
+        double? pendingFreq = null;
+        int pendingLineNo = 0;
+        var pendingValues = new List<double>();
+
+        int FlushPending()
+        {
+            if (pendingFreq is null) return 0;
+            CommitPoint(doc, pendingFreq.Value, pendingValues, pendingLineNo);
+            pendingFreq = null;
+            pendingValues.Clear();
+            return 1;
+        }
+
         for (int idx = firstIdx; idx < allLines.Length; idx++)
         {
             lineNo++;
@@ -92,8 +111,34 @@ public static class TouchstoneParser
                 continue;
             }
 
-            ParseDataLine(trimmed, doc, lineNo);
+            var tokens = SplitTokens(trimmed);
+            if (tokens.Length == 0) continue;
+
+            // Does this line start a brand-new frequency point? Only when the
+            // previous point is finished. Continuation lines (pure values,
+            // possibly indented) always continue the in-progress point.
+            bool startsNewPoint = pendingFreq is null || pendingValues.Count >= NeededValueCount(doc.PortCount);
+            if (startsNewPoint && TryParseDouble(tokens[0], out var freq))
+            {
+                FlushPending();
+                pendingFreq = freq;
+                pendingLineNo = lineNo;
+                for (int i = 1; i < tokens.Length; i++)
+                    AppendValue(tokens[i], pendingValues, doc, lineNo);
+            }
+            else
+            {
+                for (int i = 0; i < tokens.Length; i++)
+                    AppendValue(tokens[i], pendingValues, doc, lineNo);
+            }
+
+            // Commit once the point has all the pairs it needs.
+            if (pendingFreq is not null && pendingValues.Count >= NeededValueCount(doc.PortCount))
+                FlushPending();
         }
+
+        // Trailing partial point (data ends mid-row).
+        FlushPending();
 
         return doc;
     }
@@ -217,35 +262,42 @@ public static class TouchstoneParser
         _ => DataFormat.RI,
     };
 
-    private static void ParseDataLine(string line, TouchstoneDocument doc, int lineNo)
+    private static int NeededValueCount(int portCount) => portCount * portCount * 2;
+
+    private static string[] SplitTokens(string line) =>
+        line.Split(new[] { ' ', '\t' }, StringSplitOptions.RemoveEmptyEntries);
+
+    private static bool TryParseDouble(string s, out double value) =>
+        double.TryParse(s, NumberStyles.Float, CultureInfo.InvariantCulture, out value);
+
+    private static void AppendValue(string token, List<double> values, TouchstoneDocument doc, int lineNo)
     {
-        var tokens = line.Split(new[] { ' ', '\t' }, StringSplitOptions.RemoveEmptyEntries);
-        if (tokens.Length == 0) return;
+        if (TryParseDouble(token, out var parsed))
+            values.Add(parsed);
+        else
+            AddWarning(doc, $"Line {lineNo}: non-numeric token '{token}' ignored.");
+    }
 
-        // Frequency must be a real number
-        if (!double.TryParse(tokens[0], NumberStyles.Float, CultureInfo.InvariantCulture, out var freq))
-        {
-            doc.Warnings.Add($"Line {lineNo}: expected numeric frequency, got '{tokens[0]}'. Skipped.");
-            return;
-        }
+    private static void AddWarning(TouchstoneDocument doc, string message)
+    {
+        // Cap warnings: a pathological file could otherwise accumulate
+        // thousands of duplicate messages and the UI binds them all.
+        const int maxWarnings = 100;
+        if (doc.Warnings.Count < maxWarnings)
+            doc.Warnings.Add(message);
+        else if (doc.Warnings.Count == maxWarnings)
+            doc.Warnings.Add("... further warnings suppressed ...");
+    }
 
+    private static void CommitPoint(TouchstoneDocument doc, double freq, List<double> values, int lineNo)
+    {
         int n = doc.PortCount;
-        int valuesNeeded = n * n * 2;
-        var values = new List<double>(tokens.Length - 1);
-        for (int i = 1; i < tokens.Length; i++)
-        {
-            if (double.TryParse(tokens[i], NumberStyles.Float, CultureInfo.InvariantCulture, out var parsed))
-                values.Add(parsed);
-            else
-                doc.Warnings.Add($"Line {lineNo}: non-numeric token '{tokens[i]}' ignored.");
-        }
+        int needed = NeededValueCount(n);
 
-        if (values.Count < valuesNeeded)
+        if (values.Count < needed)
         {
-            // In Touchstone v1, n>2 lines may be wrapped. Allow continuation.
-            // For simplicity, we just warn if short.
-            doc.Warnings.Add(
-                $"Line {lineNo}: expected {valuesNeeded} values for {n}-port data, found {values.Count}. Parsed as partial.");
+            AddWarning(doc,
+                $"Line {lineNo}: expected {needed} values for {n}-port data, found {values.Count}. Parsed as partial.");
         }
 
         var point = new TouchstoneDataPoint
@@ -297,13 +349,13 @@ public static class TouchstoneParser
 
         if (!double.TryParse(tokens[0], NumberStyles.Float, CultureInfo.InvariantCulture, out var freq))
         {
-            doc.Warnings.Add($"Noise line {lineNo}: bad frequency.");
+            AddWarning(doc, $"Noise line {lineNo}: bad frequency.");
             return;
         }
 
         if (!double.TryParse(tokens[1], NumberStyles.Float, CultureInfo.InvariantCulture, out var nfDb))
         {
-            doc.Warnings.Add($"Noise line {lineNo}: bad noise figure.");
+            AddWarning(doc, $"Noise line {lineNo}: bad noise figure.");
             return;
         }
 
