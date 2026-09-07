@@ -19,18 +19,46 @@ namespace QuickLook.Plugin.SnpViewer;
 
 public partial class SnpPanel : UserControl
 {
+    private readonly bool _lightTheme;
+
     public SnpPanel()
     {
         InitializeComponent();
+        _lightTheme = ThemeHelper.IsSystemLightTheme();
+        ApplyPanelTheme(_lightTheme);
         YDb.IsChecked = true;
         XLinear.IsChecked = true;
+    }
+
+    private void ApplyPanelTheme(bool light)
+    {
+        SetBrush("PanelBg", light ? "#FFFFFF" : "#1E1E1E");
+        SetBrush("PanelFg", light ? "#202020" : "#E0E0E0");
+        SetBrush("GridRowBg", light ? "#FFFFFF" : "#1E1E1E");
+        SetBrush("GridAltRowBg", light ? "#F5F5F5" : "#262626");
+        SetBrush("GridLine", light ? "#DDDDDD" : "#333333");
+        SetBrush("GridHeaderBg", light ? "#EAEAEA" : "#2D2D30");
+        SetBrush("GridHeaderFg", light ? "#202020" : "#E0E0E0");
+        SetBrush("TrackerBg", light ? "#FFFFE0" : "#2D2D30");
+        SetBrush("TrackerBorder", light ? "#000000" : "#808080");
+        SetBrush("TrackerFg", light ? "#000000" : "#E0E0E0");
+        SetBrush("TrackerCrosshair", "#808080");
+        SetBrush("TabCheckedBg", "#007ACC");
+        SetBrush("TabHoverBg", light ? "#E5E5E5" : "#3E3E42");
+        SetBrush("WarningFg", light ? "#9A6B00" : "#E0A800");
+    }
+
+    private void SetBrush(string key, string hex)
+    {
+        if (Resources[key] is System.Windows.Media.SolidColorBrush b)
+            b.Color = (System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString(hex);
     }
 
     private SnpViewModel? _vm;
 
     public async void LoadFile(string path)
     {
-        _vm = new SnpViewModel(path);
+        _vm = new SnpViewModel(path, _lightTheme);
         DataContext = _vm;
 
         YDb.IsChecked = true;
@@ -69,6 +97,7 @@ public partial class SnpPanel : UserControl
             XLinear.IsChecked = true;
             _vm.RebuildPlot(YAxisMode.Db, XAxisMode.Linear);
             _vm.RebuildDataGrid();
+            SyncWarnings();
 
             // Push the freshly-built PlotModel to the PlotView directly.
             // Going via DataContext/Binding is racy on first show because
@@ -129,6 +158,18 @@ public partial class SnpPanel : UserControl
         DataGrid.ItemsSource = null;
         DataGrid.ItemsSource = _vm.DataTable.DefaultView;
     }
+
+    private void SyncWarnings()
+    {
+        if (_vm is null) return;
+        if (_vm.Warnings.Count == 0)
+        {
+            WarningBar.Visibility = Visibility.Collapsed;
+            return;
+        }
+        WarningBar.Text = string.Join("   |   ", _vm.Warnings);
+        WarningBar.Visibility = Visibility.Visible;
+    }
 }
 
 public enum YAxisMode
@@ -170,11 +211,13 @@ public class SnpViewModel : INotifyPropertyChanged
     public XAxisMode CurrentX { get; private set; } = XAxisMode.Linear;
 
     private TouchstoneDocument? _doc;
+    private readonly PlotTheme _theme;
 
-    public SnpViewModel(string path)
+    public SnpViewModel(string path, bool lightTheme = false)
     {
         _path = path;
         FileName = Path.GetFileName(path);
+        _theme = ThemeHelper.PlotTheme(lightTheme);
     }
 
     public event PropertyChangedEventHandler? PropertyChanged;
@@ -238,23 +281,16 @@ public class SnpViewModel : INotifyPropertyChanged
             Warnings.Add(w);
     }
 
-    // Dark styling shared by every PlotModel (matches the #1E1E1E panel).
-    private static readonly OxyColor Bg = OxyColor.FromRgb(0x1E, 0x1E, 0x1E);
-    private static readonly OxyColor Fg = OxyColor.FromRgb(0xE0, 0xE0, 0xE0);
-    private static readonly OxyColor GridMajor = OxyColor.FromRgb(0x33, 0x33, 0x33);
-    private static readonly OxyColor GridMinor = OxyColor.FromRgb(0x2A, 0x2A, 0x2A);
-    private static readonly OxyColor AxisLine = OxyColor.FromRgb(0x80, 0x80, 0x80);
-
-    private static void StyleAxis(Axis axis, string title)
+    private void StyleAxis(Axis axis, string title)
     {
         axis.Title = title;
-        axis.TitleColor = Fg;
-        axis.TextColor = Fg;
-        axis.AxislineColor = AxisLine;
-        axis.TicklineColor = AxisLine;
-        axis.MajorGridlineColor = GridMajor;
+        axis.TitleColor = _theme.Fg;
+        axis.TextColor = _theme.Fg;
+        axis.AxislineColor = _theme.AxisLine;
+        axis.TicklineColor = _theme.AxisLine;
+        axis.MajorGridlineColor = _theme.GridMajor;
         axis.MajorGridlineStyle = LineStyle.Solid;
-        axis.MinorGridlineColor = GridMinor;
+        axis.MinorGridlineColor = _theme.GridMinor;
         axis.MinorGridlineStyle = LineStyle.Solid;
     }
 
@@ -263,10 +299,10 @@ public class SnpViewModel : INotifyPropertyChanged
         var pm = new PlotModel
         {
             Title = FileName,
-            TitleColor = Fg,
-            Background = Bg,
-            PlotAreaBackground = Bg,
-            TextColor = Fg
+            TitleColor = _theme.Fg,
+            Background = _theme.Bg,
+            PlotAreaBackground = _theme.Bg,
+            TextColor = _theme.Fg
         };
         var xb = new LinearAxis { Position = AxisPosition.Bottom };
         var yl = new LinearAxis { Position = AxisPosition.Left };
@@ -290,12 +326,18 @@ public class SnpViewModel : INotifyPropertyChanged
         var pm = new PlotModel
         {
             Title = $"{FileName} — {y} view",
-            TitleColor = Fg,
+            TitleColor = _theme.Fg,
             TitleFontSize = 13,
-            Background = Bg,
-            PlotAreaBackground = Bg,
-            TextColor = Fg
+            Subtitle = Summary,
+            SubtitleColor = _theme.Fg,
+            Background = _theme.Bg,
+            PlotAreaBackground = _theme.Bg,
+            TextColor = _theme.Fg
         };
+        // Series carry Titles (S11, S21, ...); an explicit legend entry is
+        // required in OxyPlot 2.x (the collection is empty by default).
+        // Text follows TextColor, background stays transparent.
+        pm.Legends.Add(new OxyPlot.Legends.Legend());
 
         Axis xAxis = x == XAxisMode.Log
             ? new LogarithmicAxis { Position = AxisPosition.Bottom, Base = 10 }

@@ -7,27 +7,44 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              d:DataContext="{d:DesignInstance local:SnpViewModel}"
-             Background="#1E1E1E"
-             Foreground="#E0E0E0"
+             Background="{DynamicResource PanelBg}"
+             Foreground="{DynamicResource PanelFg}"
              Loaded="SnpPanel_OnLoaded">
     <UserControl.Resources>
+        <!-- Theme brushes. Dark values are the defaults; SnpPanel ctor swaps
+             them for light values when Windows is in light app mode. -->
+        <SolidColorBrush x:Key="PanelBg" Color="#1E1E1E" />
+        <SolidColorBrush x:Key="PanelFg" Color="#E0E0E0" />
+        <SolidColorBrush x:Key="GridRowBg" Color="#1E1E1E" />
+        <SolidColorBrush x:Key="GridAltRowBg" Color="#262626" />
+        <SolidColorBrush x:Key="GridLine" Color="#333333" />
+        <SolidColorBrush x:Key="GridHeaderBg" Color="#2D2D30" />
+        <SolidColorBrush x:Key="GridHeaderFg" Color="#E0E0E0" />
+        <SolidColorBrush x:Key="TrackerBg" Color="#2D2D30" />
+        <SolidColorBrush x:Key="TrackerBorder" Color="#808080" />
+        <SolidColorBrush x:Key="TrackerFg" Color="#E0E0E0" />
+        <SolidColorBrush x:Key="TrackerCrosshair" Color="#808080" />
+        <SolidColorBrush x:Key="TabCheckedBg" Color="#007ACC" />
+        <SolidColorBrush x:Key="TabHoverBg" Color="#3E3E42" />
+        <SolidColorBrush x:Key="WarningFg" Color="#E0A800" />
+
         <Style TargetType="TextBlock">
-            <Setter Property="Foreground" Value="#E0E0E0" />
+            <Setter Property="Foreground" Value="{DynamicResource PanelFg}" />
         </Style>
         <Style TargetType="DataGrid">
-            <Setter Property="Background" Value="#1E1E1E" />
-            <Setter Property="Foreground" Value="#E0E0E0" />
-            <Setter Property="RowBackground" Value="#1E1E1E" />
-            <Setter Property="AlternatingRowBackground" Value="#262626" />
+            <Setter Property="Background" Value="{DynamicResource GridRowBg}" />
+            <Setter Property="Foreground" Value="{DynamicResource PanelFg}" />
+            <Setter Property="RowBackground" Value="{DynamicResource GridRowBg}" />
+            <Setter Property="AlternatingRowBackground" Value="{DynamicResource GridAltRowBg}" />
             <Setter Property="GridLinesVisibility" Value="Horizontal" />
-            <Setter Property="HorizontalGridLinesBrush" Value="#333" />
+            <Setter Property="HorizontalGridLinesBrush" Value="{DynamicResource GridLine}" />
             <Setter Property="HeadersVisibility" Value="Column" />
             <Setter Property="BorderThickness" Value="0" />
         </Style>
         <Style TargetType="DataGridColumnHeader">
-            <Setter Property="Background" Value="#2D2D30" />
-            <Setter Property="Foreground" Value="#E0E0E0" />
-            <Setter Property="BorderBrush" Value="#333" />
+            <Setter Property="Background" Value="{DynamicResource GridHeaderBg}" />
+            <Setter Property="Foreground" Value="{DynamicResource GridHeaderFg}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource GridLine}" />
             <Setter Property="BorderThickness" Value="0,0,1,1" />
             <Setter Property="Padding" Value="6,4" />
             <Setter Property="FontWeight" Value="SemiBold" />
@@ -36,6 +53,33 @@
             <Setter Property="Background" Value="Transparent" />
             <Setter Property="BorderThickness" Value="0" />
             <Setter Property="Padding" Value="4,2" />
+        </Style>
+
+        <!-- Flat segmented-tab look for the axis option radios. -->
+        <Style x:Key="TabRadio" TargetType="RadioButton">
+            <Setter Property="Foreground" Value="{DynamicResource PanelFg}" />
+            <Setter Property="Margin" Value="0,0,6,0" />
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="RadioButton">
+                        <Border x:Name="Bd" CornerRadius="4" Padding="10,4"
+                                Background="Transparent" BorderBrush="Transparent" BorderThickness="1">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsChecked" Value="True">
+                                <Setter TargetName="Bd" Property="Background" Value="{DynamicResource TabCheckedBg}" />
+                                <Setter TargetName="Bd" Property="BorderBrush" Value="{DynamicResource TabCheckedBg}" />
+                                <Setter Property="Foreground" Value="White" />
+                            </Trigger>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Bd" Property="Background" Value="{DynamicResource TabHoverBg}" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
         </Style>
     </UserControl.Resources>
 
@@ -47,44 +91,45 @@
             <RowDefinition Height="150" />
         </Grid.RowDefinitions>
 
-        <!-- Header summary -->
-        <Border Grid.Row="0" Padding="10" Background="#2D2D30" CornerRadius="4" Margin="0,0,0,8">
-            <StackPanel>
-                <TextBlock Text="{Binding FileName}" FontSize="18" FontWeight="SemiBold" />
-                <TextBlock Text="{Binding Summary}" FontSize="12" Opacity="0.85" Margin="0,4,0,0" />
-                <ItemsControl ItemsSource="{Binding Warnings}" Margin="0,4,0,0">
-                    <ItemsControl.ItemTemplate>
-                        <DataTemplate>
-                            <TextBlock Text="{Binding}" Foreground="#E0A800" FontSize="11" />
-                        </DataTemplate>
-                    </ItemsControl.ItemTemplate>
-                </ItemsControl>
-            </StackPanel>
+        <!-- Slim warning bar (only visible when the parser emitted warnings).
+             File name already shows in the QuickLook window title. -->
+        <TextBlock x:Name="WarningBar" Grid.Row="0" Visibility="Collapsed"
+                   TextWrapping="Wrap" Foreground="{DynamicResource WarningFg}"
+                   FontSize="11" Margin="0,0,0,6" />
+
+        <!-- Plot. Tracker tooltip is re-templated below because the stock
+             pale-yellow box inherits our light foreground (unreadable). -->
+        <Border Grid.Row="1" Background="{DynamicResource PanelBg}" CornerRadius="4" Padding="4">
+            <oxy:PlotView x:Name="Plot">
+                <oxy:PlotView.DefaultTrackerTemplate>
+                    <ControlTemplate>
+                        <oxy:TrackerControl Position="{Binding Position}"
+                                            LineExtents="{Binding PlotModel.PlotArea}"
+                                            Background="{DynamicResource TrackerBg}"
+                                            BorderBrush="{DynamicResource TrackerBorder}"
+                                            BorderThickness="1"
+                                            LineStroke="{DynamicResource TrackerCrosshair}">
+                            <oxy:TrackerControl.Content>
+                                <TextBlock Text="{Binding}" Margin="7"
+                                           Foreground="{DynamicResource TrackerFg}" FontSize="12" />
+                            </oxy:TrackerControl.Content>
+                        </oxy:TrackerControl>
+                    </ControlTemplate>
+                </oxy:PlotView.DefaultTrackerTemplate>
+            </oxy:PlotView>
         </Border>
 
-        <!-- Plot -->
-        <Border Grid.Row="1" Background="#1E1E1E" CornerRadius="4" Padding="4">
-            <oxy:PlotView x:Name="Plot" />
-        </Border>
-
-        <!-- Tabs / units toggle -->
+        <!-- Axis options as flat tabs -->
         <StackPanel Grid.Row="2" Orientation="Horizontal" Margin="0,8,0,4">
             <TextBlock Text="Y-axis:" VerticalAlignment="Center" Margin="0,0,8,0" />
-            <RadioButton x:Name="YDb" Content="dB" GroupName="Y" Margin="0,0,12,0"
-                         Foreground="#E0E0E0" Checked="YDb_OnChecked" />
-            <RadioButton x:Name="YMagnitude" Content="Magnitude" GroupName="Y" Margin="0,0,12,0"
-                         Foreground="#E0E0E0" Checked="YMagnitude_OnChecked" />
-            <RadioButton x:Name="YReal" Content="Real" GroupName="Y" Margin="0,0,12,0"
-                         Foreground="#E0E0E0" Checked="YReal_OnChecked" />
-            <RadioButton x:Name="YImag" Content="Imaginary" GroupName="Y" Margin="0,0,12,0"
-                         Foreground="#E0E0E0" Checked="YImag_OnChecked" />
-            <RadioButton x:Name="YPhase" Content="Phase (°)" GroupName="Y"
-                         Foreground="#E0E0E0" Checked="YPhase_OnChecked" />
-            <TextBlock Text="X-axis:" VerticalAlignment="Center" Margin="24,0,8,0" />
-            <RadioButton x:Name="XLinear" Content="Linear" GroupName="X" Margin="0,0,12,0"
-                         Foreground="#E0E0E0" Checked="XLinear_OnChecked" />
-            <RadioButton x:Name="XLog" Content="Log" GroupName="X"
-                         Foreground="#E0E0E0" Checked="XLog_OnChecked" />
+            <RadioButton x:Name="YDb" Content="dB" GroupName="Y" Style="{StaticResource TabRadio}" Checked="YDb_OnChecked" />
+            <RadioButton x:Name="YMagnitude" Content="Magnitude" GroupName="Y" Style="{StaticResource TabRadio}" Checked="YMagnitude_OnChecked" />
+            <RadioButton x:Name="YReal" Content="Real" GroupName="Y" Style="{StaticResource TabRadio}" Checked="YReal_OnChecked" />
+            <RadioButton x:Name="YImag" Content="Imaginary" GroupName="Y" Style="{StaticResource TabRadio}" Checked="YImag_OnChecked" />
+            <RadioButton x:Name="YPhase" Content="Phase (°)" GroupName="Y" Style="{StaticResource TabRadio}" Checked="YPhase_OnChecked" />
+            <TextBlock Text="X-axis:" VerticalAlignment="Center" Margin="18,0,8,0" />
+            <RadioButton x:Name="XLinear" Content="Linear" GroupName="X" Style="{StaticResource TabRadio}" Checked="XLinear_OnChecked" />
+            <RadioButton x:Name="XLog" Content="Log" GroupName="X" Style="{StaticResource TabRadio}" Checked="XLog_OnChecked" />
         </StackPanel>
 
         <!-- Data preview. NOTE: ItemsSource is assigned in code-behind
