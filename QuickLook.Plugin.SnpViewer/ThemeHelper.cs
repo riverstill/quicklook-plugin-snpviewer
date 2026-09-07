@@ -37,11 +37,12 @@ internal static class ThemeHelper
 /// </summary>
 internal sealed class PlotTheme
 {
-    public OxyColor Bg { get; init; }
-    public OxyColor Fg { get; init; }
-    public OxyColor GridMajor { get; init; }
-    public OxyColor GridMinor { get; init; }
-    public OxyColor AxisLine { get; init; }
+    // NOTE: plain setters, not init - net462 lacks IsExternalInit.
+    public OxyColor Bg { get; set; }
+    public OxyColor Fg { get; set; }
+    public OxyColor GridMajor { get; set; }
+    public OxyColor GridMinor { get; set; }
+    public OxyColor AxisLine { get; set; }
 
     public static PlotTheme Dark { get; } = new PlotTheme
     {
