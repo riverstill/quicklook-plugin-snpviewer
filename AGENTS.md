@@ -59,6 +59,15 @@ touch it:
 - `SnpPanel.LoadFile` is `async void` into the host: keep the whole
   parse+render inside try/catch and surface errors via `Summary`, never let
   exceptions escape (host shows "Failed to preview" otherwise).
+- **NEVER mutate a brush that is already in use**: WPF freezes `Freezable`
+  objects once the rendering layer has consumed them; `brush.Color = ...`
+  later throws `InvalidOperationException` ("object is in a read-only state")
+  and kills the whole preview from the ctor. To theme-switch, REPLACE the
+  entry in the ResourceDictionary (`Resources[key] = new SolidColorBrush(...)`)
+  and keep every consumer on `{DynamicResource}` (they re-resolve on swap).
+  This caused a multi-commit "Failed to preview" hunt; check
+  `%AppData%\pooi.moe\QuickLook\QuickLook.Exception.log` first whenever the
+  build is green but preview dies.
 - Host crash reports land in `%AppData%\pooi.moe\QuickLook\QuickLook.Exception.log`
   — ask for it before guessing.
 

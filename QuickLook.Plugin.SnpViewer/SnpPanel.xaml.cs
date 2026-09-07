@@ -80,8 +80,13 @@ public partial class SnpPanel : UserControl
 
     private void SetBrush(string key, string hex)
     {
-        if (Resources[key] is System.Windows.Media.SolidColorBrush b)
-            b.Color = (System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString(hex);
+        // Never mutate the existing brush: WPF freezes Freezables once they
+        // have been used by the rendering layer, and setting Color on a frozen
+        // brush throws InvalidOperationException ("object is in a read-only
+        // state") - this killed the whole preview before. Replace the entry
+        // instead; every consumer uses {DynamicResource} so they re-resolve.
+        var color = (System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString(hex);
+        Resources[key] = new System.Windows.Media.SolidColorBrush(color);
     }
 
     private SnpViewModel? _vm;
