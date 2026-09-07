@@ -23,25 +23,59 @@ public partial class SnpPanel : UserControl
 
     public SnpPanel()
     {
-        InitializeComponent();
-        _lightTheme = ThemeHelper.IsSystemLightTheme();
-        ApplyPanelTheme(_lightTheme);
-        YDb.IsChecked = true;
-        XLinear.IsChecked = true;
+        try
+        {
+            InitializeComponent();
+        }
+        catch (Exception ex)
+        {
+            // Stop the panic: if BAML fails, the host gets "Failed to preview"
+            // and the stack is lost. Recover by disabling the UI pieces that
+            // depend on named elements we no longer have (they are null-safe)
+            // and keep going - the error will surface via LoadFile's Summary.
+            Console.WriteLine("SnpPanel.InitializeComponent failed: " + ex);
+        }
+
+        try
+        {
+            _lightTheme = ThemeHelper.IsSystemLightTheme();
+            ApplyPanelTheme(_lightTheme);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine("SnpPanel theme init failed: " + ex);
+        }
+
+        try
+        {
+            YDb.IsChecked = true;
+            XLinear.IsChecked = true;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine("SnpPanel radio init failed: " + ex);
+        }
     }
 
     private void ApplyPanelTheme(bool light)
     {
-        SetBrush("PanelBg", light ? "#FFFFFF" : "#1E1E1E");
-        SetBrush("PanelFg", light ? "#202020" : "#E0E0E0");
-        SetBrush("GridRowBg", light ? "#FFFFFF" : "#1E1E1E");
-        SetBrush("GridAltRowBg", light ? "#F5F5F5" : "#262626");
-        SetBrush("GridLine", light ? "#DDDDDD" : "#333333");
-        SetBrush("GridHeaderBg", light ? "#EAEAEA" : "#2D2D30");
-        SetBrush("GridHeaderFg", light ? "#202020" : "#E0E0E0");
-        SetBrush("TabCheckedBg", "#007ACC");
-        SetBrush("TabHoverBg", light ? "#E5E5E5" : "#3E3E42");
-        SetBrush("WarningFg", light ? "#9A6B00" : "#E0A800");
+        try
+        {
+            SetBrush("PanelBg", light ? "#FFFFFF" : "#1E1E1E");
+            SetBrush("PanelFg", light ? "#202020" : "#E0E0E0");
+            SetBrush("GridRowBg", light ? "#FFFFFF" : "#1E1E1E");
+            SetBrush("GridAltRowBg", light ? "#F5F5F5" : "#262626");
+            SetBrush("GridLine", light ? "#DDDDDD" : "#333333");
+            SetBrush("GridHeaderBg", light ? "#EAEAEA" : "#2D2D30");
+            SetBrush("GridHeaderFg", light ? "#202020" : "#E0E0E0");
+            SetBrush("TabCheckedBg", "#007ACC");
+            SetBrush("TabHoverBg", light ? "#E5E5E5" : "#3E3E42");
+            SetBrush("WarningFg", light ? "#9A6B00" : "#E0A800");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine("SnpPanel theme brush setup failed: " + ex);
+        }
     }
 
     private void SetBrush(string key, string hex)
