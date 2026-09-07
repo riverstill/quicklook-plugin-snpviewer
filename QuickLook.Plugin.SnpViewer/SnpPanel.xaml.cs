@@ -182,9 +182,42 @@ public class SnpViewModel : INotifyPropertyChanged
     private void OnPropertyChanged([CallerMemberName] string? name = null) =>
         PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
 
+    // Display unit for the frequency axis / table: picked from the data so
+    // a 0..20 GHz sweep reads "GHz" while a 0..500 MHz sweep reads "MHz".
+    private FrequencyUnit _displayUnit = FrequencyUnit.GHz;
+    private double _displayFactor = 1.0;
+    private double ToDisplayFreq(double raw) => raw * _displayFactor;
+
+    private static double UnitToHz(FrequencyUnit u) => u switch
+    {
+        FrequencyUnit.Hz => 1.0,
+        FrequencyUnit.kHz => 1e3,
+        FrequencyUnit.MHz => 1e6,
+        FrequencyUnit.GHz => 1e9,
+        _ => 1.0,
+    };
+
+    private void UpdateDisplayUnit()
+    {
+        if (_doc is null || _doc.Points.Count == 0)
+        {
+            _displayUnit = _doc?.FrequencyUnit ?? FrequencyUnit.GHz;
+            _displayFactor = 1.0;
+            return;
+        }
+
+        double maxHz = _doc.Points.Max(p => p.Frequency) * UnitToHz(_doc.FrequencyUnit);
+        _displayUnit = maxHz >= 1e9 ? FrequencyUnit.GHz
+            : maxHz >= 1e6 ? FrequencyUnit.MHz
+            : maxHz >= 1e3 ? FrequencyUnit.kHz
+            : FrequencyUnit.Hz;
+        _displayFactor = UnitToHz(_doc.FrequencyUnit) / UnitToHz(_displayUnit);
+    }
+
     public void ApplyDocument(TouchstoneDocument doc)
     {
         _doc = doc;
+        UpdateDisplayUnit();
 
         if (doc.Points.Count == 0)
         {
@@ -192,12 +225,12 @@ public class SnpViewModel : INotifyPropertyChanged
         }
         else
         {
-            var fmin = doc.Points.First().Frequency;
-            var fmax = doc.Points.Last().Frequency;
+            var fmin = ToDisplayFreq(doc.Points.First().Frequency);
+            var fmax = ToDisplayFreq(doc.Points.Last().Frequency);
             Summary =
                 $"{doc.PortCount}-port · {doc.ParamType} · {doc.DataFormat} · " +
                 $"f ∈ [{fmin.ToString("G4", CultureInfo.InvariantCulture)}, " +
-                $"{fmax.ToString("G4", CultureInfo.InvariantCulture)}] {doc.FrequencyUnit} · " +
+                $"{fmax.ToString("G4", CultureInfo.InvariantCulture)}] {_displayUnit} · " +
                 $"{doc.Points.Count} samples · R = {doc.ReferenceResistance} Ω";
         }
 
@@ -205,17 +238,42 @@ public class SnpViewModel : INotifyPropertyChanged
             Warnings.Add(w);
     }
 
+    // Dark styling shared by every PlotModel (matches the #1E1E1E panel).
+    private static readonly OxyColor Bg = OxyColor.FromRgb(0x1E, 0x1E, 0x1E);
+    private static readonly OxyColor Fg = OxyColor.FromRgb(0xE0, 0xE0, 0xE0);
+    private static readonly OxyColor GridMajor = OxyColor.FromRgb(0x33, 0x33, 0x33);
+    private static readonly OxyColor GridMinor = OxyColor.FromRgb(0x2A, 0x2A, 0x2A);
+    private static readonly OxyColor AxisLine = OxyColor.FromRgb(0x80, 0x80, 0x80);
+
+    private static void StyleAxis(Axis axis, string title)
+    {
+        axis.Title = title;
+        axis.TitleColor = Fg;
+        axis.TextColor = Fg;
+        axis.AxislineColor = AxisLine;
+        axis.TicklineColor = AxisLine;
+        axis.MajorGridlineColor = GridMajor;
+        axis.MajorGridlineStyle = LineStyle.Solid;
+        axis.MinorGridlineColor = GridMinor;
+        axis.MinorGridlineStyle = LineStyle.Solid;
+    }
+
     public void BuildEmptyPlot()
     {
         var pm = new PlotModel
         {
             Title = FileName,
-            TitleColor = OxyColor.FromRgb(0xE0, 0xE0, 0xE0),
-            PlotAreaBackground = OxyColor.FromRgb(0xFF, 0xFF, 0xFF),
-            TextColor = OxyColor.FromRgb(0x20, 0x20, 0x20)
+            TitleColor = Fg,
+            Background = Bg,
+            PlotAreaBackground = Bg,
+            TextColor = Fg
         };
-        pm.Axes.Add(new LinearAxis { Position = AxisPosition.Bottom, Title = "Frequency" });
-        pm.Axes.Add(new LinearAxis { Position = AxisPosition.Left, Title = "Value" });
+        var xb = new LinearAxis { Position = AxisPosition.Bottom };
+        var yl = new LinearAxis { Position = AxisPosition.Left };
+        StyleAxis(xb, "Frequency");
+        StyleAxis(yl, "Value");
+        pm.Axes.Add(xb);
+        pm.Axes.Add(yl);
         PlotModel = pm;
     }
 
@@ -232,18 +290,25 @@ public class SnpViewModel : INotifyPropertyChanged
         var pm = new PlotModel
         {
             Title = $"{FileName} — {y} view",
-            TitleColor = OxyColor.FromRgb(0xE0, 0xE0, 0xE0),
-            PlotAreaBackground = OxyColor.FromRgb(0xFF, 0xFF, 0xFF),
-            TextColor = OxyColor.FromRgb(0x20, 0x20, 0x20)
+            TitleColor = Fg,
+            TitleFontSize = 13,
+            Background = Bg,
+            PlotAreaBackground = Bg,
+            TextColor = Fg
         };
 
-        pm.Axes.Add(x == XAxisMode.Log
-            ? new LogarithmicAxis { Position = AxisPosition.Bottom, Title = $"Frequency ({_doc.FrequencyUnit})", Base = 10 }
-            : new LinearAxis { Position = AxisPosition.Bottom, Title = $"Frequency ({_doc.FrequencyUnit})" });
-
-        pm.Axes.Add(new LinearAxis { Position = AxisPosition.Left, Title = y.ToString() });
+        Axis xAxis = x == XAxisMode.Log
+            ? new LogarithmicAxis { Position = AxisPosition.Bottom, Base = 10 }
+            : new LinearAxis { Position = AxisPosition.Bottom };
+        var yAxis = new LinearAxis { Position = AxisPosition.Left };
+        StyleAxis(xAxis, $"Frequency ({_displayUnit})");
+        StyleAxis(yAxis, y.ToString());
+        pm.Axes.Add(xAxis);
+        pm.Axes.Add(yAxis);
 
         int n = _doc.PortCount;
+        // Brightened for the dark background (matplotlib "tab" set with the
+        // low-contrast brown swapped for yellow).
         var palette = new[]
         {
             OxyColor.FromRgb(0x1F, 0x77, 0xB4),
@@ -251,7 +316,7 @@ public class SnpViewModel : INotifyPropertyChanged
             OxyColor.FromRgb(0x2C, 0xA0, 0x2C),
             OxyColor.FromRgb(0xFF, 0x7F, 0x0E),
             OxyColor.FromRgb(0x94, 0x67, 0xBD),
-            OxyColor.FromRgb(0x8C, 0x56, 0x4B),
+            OxyColor.FromRgb(0xBC, 0xBD, 0x22),
             OxyColor.FromRgb(0xE3, 0x77, 0xC2),
             OxyColor.FromRgb(0x17, 0xBE, 0xCF),
         };
@@ -281,7 +346,7 @@ public class SnpViewModel : INotifyPropertyChanged
                         YAxisMode.Phase => c.Magnitude > 0 ? c.Phase * 180.0 / Math.PI : double.NaN,
                         _ => c.Real
                     };
-                    series.Points.Add(new DataPoint(p.Frequency, yv));
+                    series.Points.Add(new DataPoint(ToDisplayFreq(p.Frequency), yv));
                 }
 
                 pm.Series.Add(series);
@@ -312,7 +377,7 @@ public class SnpViewModel : INotifyPropertyChanged
 
         int n = _doc.PortCount;
 
-        var freqCol = new DataColumn($"freq ({_doc.FrequencyUnit})", typeof(double));
+        var freqCol = new DataColumn($"freq ({_displayUnit})", typeof(double));
         DataTable.Columns.Add(freqCol);
 
         for (int i = 0; i < n; i++)
@@ -334,7 +399,7 @@ public class SnpViewModel : INotifyPropertyChanged
         {
             var p = _doc.Points[k];
             var row = DataTable.NewRow();
-            row[0] = p.Frequency;
+            row[0] = ToDisplayFreq(p.Frequency);
             int col = 1;
             for (int i = 0; i < n; i++)
             {
