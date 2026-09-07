@@ -120,9 +120,11 @@ public class TouchstoneParserTests
         // style). Regression test for negative frequencies appearing because
         // continuation lines were parsed as brand-new points.
         var tmp = Path.GetTempFileName();
+        var s4p = Path.ChangeExtension(tmp, ".s4p");
+        File.Move(tmp, s4p);
         try
         {
-            File.WriteAllText(tmp, string.Join("\n",
+            File.WriteAllText(s4p, string.Join("\n",
                 "# MHz S DB R 50",
                 "30.0 -43.1546974182 4.42637395859 -0.0155005577123 -3.5213804245 -59.6902514371 81.3233413696 -81.9710055264 -137.447784424",
                 " -0.0199402879095 -3.52944231033 -47.1753616333 0.19410559535 -85.4014025601 -139.451477051 -59.6951266202 81.489692688",
@@ -133,7 +135,7 @@ public class TouchstoneParserTests
                 " -56.8043120705 81.1423797607 -79.6101325356 -143.807128906 -37.4845581055 -0.103454813361 -0.0756442301987 -6.3643078804",
                 " -80.2031882607 -148.123565674 -56.8799727761 81.6954498291 -0.0882341914887 -6.37493515015 -36.8609199524 -3.3355846405"));
 
-            var doc = TouchstoneParser.Parse(tmp);
+            var doc = TouchstoneParser.Parse(s4p);
 
             Assert.Equal(4, doc.PortCount);
             Assert.Equal(2, doc.Points.Count);
@@ -157,7 +159,7 @@ public class TouchstoneParserTests
         }
         finally
         {
-            File.Delete(tmp);
+            File.Delete(s4p);
         }
     }
 }
