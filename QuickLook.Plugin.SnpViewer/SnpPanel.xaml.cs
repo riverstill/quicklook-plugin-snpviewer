@@ -39,10 +39,6 @@ public partial class SnpPanel : UserControl
         SetBrush("GridLine", light ? "#DDDDDD" : "#333333");
         SetBrush("GridHeaderBg", light ? "#EAEAEA" : "#2D2D30");
         SetBrush("GridHeaderFg", light ? "#202020" : "#E0E0E0");
-        SetBrush("TrackerBg", light ? "#FFFFE0" : "#2D2D30");
-        SetBrush("TrackerBorder", light ? "#000000" : "#808080");
-        SetBrush("TrackerFg", light ? "#000000" : "#E0E0E0");
-        SetBrush("TrackerCrosshair", "#808080");
         SetBrush("TabCheckedBg", "#007ACC");
         SetBrush("TabHoverBg", light ? "#E5E5E5" : "#3E3E42");
         SetBrush("WarningFg", light ? "#9A6B00" : "#E0A800");
@@ -302,7 +298,8 @@ public class SnpViewModel : INotifyPropertyChanged
             TitleColor = _theme.Fg,
             Background = _theme.Bg,
             PlotAreaBackground = _theme.Bg,
-            TextColor = _theme.Fg
+            TextColor = _theme.Fg,
+            DefaultTrackerFormatString = "{0}\n{1}: {2:0.###}\n{3}: {4:0.###}"
         };
         var xb = new LinearAxis { Position = AxisPosition.Bottom };
         var yl = new LinearAxis { Position = AxisPosition.Left };
@@ -332,7 +329,8 @@ public class SnpViewModel : INotifyPropertyChanged
             SubtitleColor = _theme.Fg,
             Background = _theme.Bg,
             PlotAreaBackground = _theme.Bg,
-            TextColor = _theme.Fg
+            TextColor = _theme.Fg,
+            DefaultTrackerFormatString = "{0}\n{1}: {2:0.###}\n{3}: {4:0.###}"
         };
         // Series carry Titles (S11, S21, ...); an explicit legend entry is
         // required in OxyPlot 2.x (the collection is empty by default).
@@ -373,7 +371,8 @@ public class SnpViewModel : INotifyPropertyChanged
                     Title = $"{_doc.ParamType}{i + 1}{j + 1}",
                     Color = palette[colorIdx % palette.Length],
                     StrokeThickness = 1.2,
-                    MarkerType = MarkerType.None
+                    MarkerType = MarkerType.None,
+                    TrackerFormatString = "{0}\nf = {2:0.###} {XAxis.Title}\n{3} = {4:0.###}"
                 };
 
                 foreach (var p in _doc.Points)

@@ -20,17 +20,10 @@
         <SolidColorBrush x:Key="GridLine" Color="#333333" />
         <SolidColorBrush x:Key="GridHeaderBg" Color="#2D2D30" />
         <SolidColorBrush x:Key="GridHeaderFg" Color="#E0E0E0" />
-        <SolidColorBrush x:Key="TrackerBg" Color="#2D2D30" />
-        <SolidColorBrush x:Key="TrackerBorder" Color="#808080" />
-        <SolidColorBrush x:Key="TrackerFg" Color="#E0E0E0" />
-        <SolidColorBrush x:Key="TrackerCrosshair" Color="#808080" />
         <SolidColorBrush x:Key="TabCheckedBg" Color="#007ACC" />
         <SolidColorBrush x:Key="TabHoverBg" Color="#3E3E42" />
         <SolidColorBrush x:Key="WarningFg" Color="#E0A800" />
 
-        <Style TargetType="TextBlock">
-            <Setter Property="Foreground" Value="{DynamicResource PanelFg}" />
-        </Style>
         <Style TargetType="DataGrid">
             <Setter Property="Background" Value="{DynamicResource GridRowBg}" />
             <Setter Property="Foreground" Value="{DynamicResource PanelFg}" />
@@ -96,38 +89,20 @@
         <TextBlock x:Name="WarningBar" Grid.Row="0" Visibility="Collapsed"
                    TextWrapping="Wrap" Foreground="{DynamicResource WarningFg}"
                    FontSize="11" Margin="0,0,0,6" />
-
-        <!-- Plot. Tracker tooltip is re-templated below because the stock
-             pale-yellow box inherits our light foreground (unreadable). -->
+        <!-- Plot -->
         <Border Grid.Row="1" Background="{DynamicResource PanelBg}" CornerRadius="4" Padding="4">
-            <oxy:PlotView x:Name="Plot">
-                <oxy:PlotView.DefaultTrackerTemplate>
-                    <ControlTemplate>
-                        <oxy:TrackerControl Position="{Binding Position}"
-                                            LineExtents="{Binding PlotModel.PlotArea}"
-                                            Background="{DynamicResource TrackerBg}"
-                                            BorderBrush="{DynamicResource TrackerBorder}"
-                                            BorderThickness="1"
-                                            LineStroke="{DynamicResource TrackerCrosshair}">
-                            <oxy:TrackerControl.Content>
-                                <TextBlock Text="{Binding}" Margin="7"
-                                           Foreground="{DynamicResource TrackerFg}" FontSize="12" />
-                            </oxy:TrackerControl.Content>
-                        </oxy:TrackerControl>
-                    </ControlTemplate>
-                </oxy:PlotView.DefaultTrackerTemplate>
-            </oxy:PlotView>
+            <oxy:PlotView x:Name="Plot" />
         </Border>
 
         <!-- Axis options as flat tabs -->
         <StackPanel Grid.Row="2" Orientation="Horizontal" Margin="0,8,0,4">
-            <TextBlock Text="Y-axis:" VerticalAlignment="Center" Margin="0,0,8,0" />
+            <TextBlock Text="Y-axis:" VerticalAlignment="Center" Margin="0,0,8,0" Foreground="{DynamicResource PanelFg}" />
             <RadioButton x:Name="YDb" Content="dB" GroupName="Y" Style="{StaticResource TabRadio}" Checked="YDb_OnChecked" />
             <RadioButton x:Name="YMagnitude" Content="Magnitude" GroupName="Y" Style="{StaticResource TabRadio}" Checked="YMagnitude_OnChecked" />
             <RadioButton x:Name="YReal" Content="Real" GroupName="Y" Style="{StaticResource TabRadio}" Checked="YReal_OnChecked" />
             <RadioButton x:Name="YImag" Content="Imaginary" GroupName="Y" Style="{StaticResource TabRadio}" Checked="YImag_OnChecked" />
             <RadioButton x:Name="YPhase" Content="Phase (°)" GroupName="Y" Style="{StaticResource TabRadio}" Checked="YPhase_OnChecked" />
-            <TextBlock Text="X-axis:" VerticalAlignment="Center" Margin="18,0,8,0" />
+            <TextBlock Text="X-axis:" VerticalAlignment="Center" Margin="18,0,8,0" Foreground="{DynamicResource PanelFg}" />
             <RadioButton x:Name="XLinear" Content="Linear" GroupName="X" Style="{StaticResource TabRadio}" Checked="XLinear_OnChecked" />
             <RadioButton x:Name="XLog" Content="Log" GroupName="X" Style="{StaticResource TabRadio}" Checked="XLog_OnChecked" />
         </StackPanel>
