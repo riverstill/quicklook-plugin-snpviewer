@@ -54,7 +54,7 @@
             <Setter Property="Padding" Value="4,2" />
         </Style>
 
-        <!-- Flat segmented-tab look for the axis option radios. -->
+        <!-- Flat pill look for the axis option radios. -->
         <Style x:Key="TabRadio" TargetType="RadioButton">
             <Setter Property="Foreground" Value="{DynamicResource PanelFg}" />
             <Setter Property="Margin" Value="0,0,6,0" />
@@ -62,8 +62,9 @@
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="RadioButton">
-                        <Border x:Name="Bd" CornerRadius="4" Padding="10,4"
-                                Background="Transparent" BorderBrush="Transparent" BorderThickness="1">
+                        <Border x:Name="Bd" CornerRadius="10" Padding="14,6"
+                                Background="Transparent"
+                                BorderBrush="{DynamicResource GridLine}" BorderThickness="1">
                             <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
                         </Border>
                         <ControlTemplate.Triggers>
@@ -85,18 +86,51 @@
     <Grid Margin="12">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
             <RowDefinition Height="*" MinHeight="380" />
             <RowDefinition Height="Auto" />
             <RowDefinition Height="150" />
         </Grid.RowDefinitions>
 
-        <!-- Slim warning bar (only visible when the parser emitted warnings).
-             File name already shows in the QuickLook window title. -->
-        <TextBlock x:Name="WarningBar" Grid.Row="0" Visibility="Collapsed"
+        <!-- Header: waveform icon + big title + dimmed subtitle on the left,
+             filename pill on the right. (Filename is also in the host title.) -->
+        <Grid Grid.Row="0" Margin="0,0,0,10">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+            <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
+                <Path Data="M2,20 L8,20 L11,6 L17,34 L20,20 L26,20" Width="26" Height="22"
+                      Stretch="Uniform" Stroke="{DynamicResource TabCheckedBg}"
+                      StrokeThickness="2.5" StrokeLineJoin="Round" StrokeStartLineCap="Round"
+                      StrokeEndLineCap="Round" VerticalAlignment="Center" />
+                <StackPanel Margin="10,0,0,0" VerticalAlignment="Center">
+                    <TextBlock Text="S-Parameters" FontSize="20" FontWeight="Bold"
+                               Foreground="{DynamicResource PanelFg}" />
+                    <TextBlock x:Name="HeaderSubtitle" FontSize="12" Opacity="0.7"
+                               Foreground="{DynamicResource PanelFg}"
+                               TextTrimming="CharacterEllipsis" Margin="0,2,0,0" />
+                </StackPanel>
+            </StackPanel>
+            <Border Grid.Column="1" CornerRadius="8" Padding="12,7"
+                    BorderBrush="{DynamicResource GridLine}" BorderThickness="1"
+                    VerticalAlignment="Center" Margin="12,0,0,0">
+                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                    <Path Data="M4,0 H10 L14,4 V18 H4 Z M10,0 V4 H14" Width="13" Height="14"
+                          Stretch="Uniform" Fill="{DynamicResource PanelFg}" Opacity="0.8"
+                          VerticalAlignment="Center" />
+                    <TextBlock x:Name="FilePillText" FontSize="12" Margin="7,0,0,0"
+                               Foreground="{DynamicResource PanelFg}" VerticalAlignment="Center" />
+                </StackPanel>
+            </Border>
+        </Grid>
+
+        <!-- Slim warning bar (only visible when the parser emitted warnings). -->
+        <TextBlock x:Name="WarningBar" Grid.Row="1" Visibility="Collapsed"
                    TextWrapping="Wrap" Foreground="{DynamicResource WarningFg}"
                    FontSize="11" Margin="0,0,0,6" />
         <!-- Plot -->
-        <Border Grid.Row="1" Background="{DynamicResource PanelBg}" CornerRadius="4" Padding="4">
+        <Border Grid.Row="2" Background="{DynamicResource PanelBg}" CornerRadius="4" Padding="4">
             <oxy:PlotView x:Name="Plot">
                 <!-- Tracker (hover tooltip) template. The stone-cold default
                      is a pale-yellow box whose TextBlock has no explicit
@@ -121,23 +155,27 @@
             </oxy:PlotView>
         </Border>
 
-        <!-- Axis options as flat tabs -->
-        <StackPanel Grid.Row="2" Orientation="Horizontal" Margin="0,8,0,4">
-            <TextBlock Text="Y-axis:" VerticalAlignment="Center" Margin="0,0,8,0" Foreground="{DynamicResource PanelFg}" />
-            <RadioButton x:Name="YDb" Content="dB" GroupName="Y" Style="{StaticResource TabRadio}" Checked="YDb_OnChecked" />
-            <RadioButton x:Name="YMagnitude" Content="Magnitude" GroupName="Y" Style="{StaticResource TabRadio}" Checked="YMagnitude_OnChecked" />
-            <RadioButton x:Name="YReal" Content="Real" GroupName="Y" Style="{StaticResource TabRadio}" Checked="YReal_OnChecked" />
-            <RadioButton x:Name="YImag" Content="Imaginary" GroupName="Y" Style="{StaticResource TabRadio}" Checked="YImag_OnChecked" />
-            <RadioButton x:Name="YPhase" Content="Phase (°)" GroupName="Y" Style="{StaticResource TabRadio}" Checked="YPhase_OnChecked" />
-            <TextBlock Text="X-axis:" VerticalAlignment="Center" Margin="18,0,8,0" Foreground="{DynamicResource PanelFg}" />
-            <RadioButton x:Name="XLinear" Content="Linear" GroupName="X" Style="{StaticResource TabRadio}" Checked="XLinear_OnChecked" />
-            <RadioButton x:Name="XLog" Content="Log" GroupName="X" Style="{StaticResource TabRadio}" Checked="XLog_OnChecked" />
-        </StackPanel>
+        <!-- Axis options as pills in a rounded bar, Y group | X group -->
+        <Border Grid.Row="3" CornerRadius="8" Padding="12,9"
+                BorderBrush="{DynamicResource GridLine}" BorderThickness="1" Margin="0,8,0,8">
+            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                <TextBlock Text="Y-axis:" VerticalAlignment="Center" Margin="0,0,8,0" Foreground="{DynamicResource PanelFg}" />
+                <RadioButton x:Name="YDb" Content="dB" GroupName="Y" Style="{StaticResource TabRadio}" Checked="YDb_OnChecked" />
+                <RadioButton x:Name="YMagnitude" Content="Magnitude" GroupName="Y" Style="{StaticResource TabRadio}" Checked="YMagnitude_OnChecked" />
+                <RadioButton x:Name="YReal" Content="Real" GroupName="Y" Style="{StaticResource TabRadio}" Checked="YReal_OnChecked" />
+                <RadioButton x:Name="YImag" Content="Imaginary" GroupName="Y" Style="{StaticResource TabRadio}" Checked="YImag_OnChecked" />
+                <RadioButton x:Name="YPhase" Content="Phase (°)" GroupName="Y" Style="{StaticResource TabRadio}" Checked="YPhase_OnChecked" />
+                <Rectangle Width="1" Margin="12,2,12,2" Fill="{DynamicResource GridLine}" VerticalAlignment="Stretch" />
+                <TextBlock Text="X-axis:" VerticalAlignment="Center" Margin="0,0,8,0" Foreground="{DynamicResource PanelFg}" />
+                <RadioButton x:Name="XLinear" Content="Linear" GroupName="X" Style="{StaticResource TabRadio}" Checked="XLinear_OnChecked" />
+                <RadioButton x:Name="XLog" Content="Log" GroupName="X" Style="{StaticResource TabRadio}" Checked="XLog_OnChecked" />
+            </StackPanel>
+        </Border>
 
         <!-- Data preview. NOTE: ItemsSource is assigned in code-behind
              (SyncDataGrid) to DataTable.DefaultView. Binding a DataTable
              object itself does not work - DataGrid needs the DataView. -->
-        <DataGrid Grid.Row="3" x:Name="DataGrid"
+        <DataGrid Grid.Row="4" x:Name="DataGrid"
                   AutoGenerateColumns="True"
                   IsReadOnly="True"
                   EnableRowVirtualization="True"

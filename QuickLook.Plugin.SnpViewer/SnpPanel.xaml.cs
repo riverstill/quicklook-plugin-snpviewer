@@ -124,6 +124,7 @@ public partial class SnpPanel : UserControl
                 Plot.Model = _vm.PlotModel;
                 Plot.InvalidatePlot();
                 SyncDataGrid();
+                SyncHeader();
                 return;
             }
 
@@ -137,6 +138,7 @@ public partial class SnpPanel : UserControl
             _vm.RebuildPlot(YAxisMode.Db, XAxisMode.Linear);
             _vm.RebuildDataGrid();
             SyncWarnings();
+            SyncHeader();
 
             // Push the freshly-built PlotModel to the PlotView directly.
             // Going via DataContext/Binding is racy on first show because
@@ -151,7 +153,7 @@ public partial class SnpPanel : UserControl
         {
             // Last-ditch net: never let a UI exception escape into the host.
             _vm.Summary = $"Render failed: {ex.Message}";
-            try { _vm.BuildEmptyPlot(); _vm.RebuildDataGrid(); } catch { /* ignored */ }
+            try { _vm.BuildEmptyPlot(); _vm.RebuildDataGrid(); SyncHeader(); } catch { /* ignored */ }
         }
     }
 
@@ -213,6 +215,13 @@ public partial class SnpPanel : UserControl
             text += $"   |   (+{_vm.Warnings.Count - maxShown} more)";
         WarningBar.Text = text;
         WarningBar.Visibility = Visibility.Visible;
+    }
+
+    private void SyncHeader()
+    {
+        if (_vm is null) return;
+        HeaderSubtitle.Text = _vm.Summary;
+        FilePillText.Text = _vm.FileName;
     }
 }
 
@@ -325,8 +334,17 @@ public class SnpViewModel : INotifyPropertyChanged
             Warnings.Add(w);
     }
 
-    private void StyleAxis(Axis axis, string title)
+    private static string YAxisTitle(YAxisMode y) => y switch
     {
+        YAxisMode.Db => "Magnitude (dB)",
+        YAxisMode.Magnitude => "Magnitude",
+        YAxisMode.Real => "Real",
+        YAxisMode.Imaginary => "Imaginary",
+        YAxisMode.Phase => "Phase (°)",
+        _ => y.ToString()
+    };
+
+    private void StyleAxis(Axis axis, string title)    {
         axis.Title = title;
         axis.TitleColor = _theme.Fg;
         axis.TextColor = _theme.Fg;
@@ -342,8 +360,8 @@ public class SnpViewModel : INotifyPropertyChanged
     {
         var pm = new PlotModel
         {
-            Title = FileName,
-            TitleColor = _theme.Fg,
+            // No plot-level title: the XAML header carries the title and
+            // the summary line instead.
             Background = _theme.Bg,
             PlotAreaBackground = _theme.Bg,
             TextColor = _theme.Fg
@@ -369,26 +387,36 @@ public class SnpViewModel : INotifyPropertyChanged
 
         var pm = new PlotModel
         {
-            Title = $"{FileName} — {y} view",
-            TitleColor = _theme.Fg,
-            TitleFontSize = 13,
-            Subtitle = Summary,
-            SubtitleColor = _theme.Fg,
+            // No plot-level title: the XAML header carries "S-Parameters"
+            // plus the summary line instead.
             Background = _theme.Bg,
             PlotAreaBackground = _theme.Bg,
             TextColor = _theme.Fg
         };
-        // Series carry Titles (S11, S21, ...); an explicit legend entry is
-        // required in OxyPlot 2.x (the collection is empty by default).
-        // Text follows TextColor, background stays transparent.
-        pm.Legends.Add(new OxyPlot.Legends.Legend());
+        // Boxed legend, top-right inside the plot area. The Legends
+        // collection is empty by default in OxyPlot 2.x, so without this
+        // nothing renders even though series carry Titles (S11, S21, ...).
+        pm.Legends.Add(new OxyPlot.Legends.Legend
+        {
+            LegendPosition = OxyPlot.Legends.LegendPosition.TopRight,
+            LegendPlacement = OxyPlot.Legends.LegendPlacement.Inside,
+            LegendOrientation = OxyPlot.Legends.LegendOrientation.Vertical,
+            LegendBackground = _theme.LegendBg,
+            LegendBorder = _theme.LegendBorder,
+            LegendBorderThickness = 1,
+            LegendTextColor = _theme.Fg,
+            LegendFontSize = 11,
+            LegendSymbolLength = 24,
+            LegendPadding = 8,
+            LegendMargin = 8,
+        });
 
         Axis xAxis = x == XAxisMode.Log
             ? new LogarithmicAxis { Position = AxisPosition.Bottom, Base = 10 }
             : new LinearAxis { Position = AxisPosition.Bottom };
         var yAxis = new LinearAxis { Position = AxisPosition.Left };
         StyleAxis(xAxis, $"Frequency ({_displayUnit})");
-        StyleAxis(yAxis, y.ToString());
+        StyleAxis(yAxis, YAxisTitle(y));
         pm.Axes.Add(xAxis);
         pm.Axes.Add(yAxis);
 
@@ -420,7 +448,7 @@ public class SnpViewModel : INotifyPropertyChanged
                 {
                     Title = $"{_doc.ParamType}{i + 1}{j + 1}",
                     Color = palette[colorIdx % palette.Length],
-                    StrokeThickness = 1.2,
+                    StrokeThickness = 1.8,
                     MarkerType = MarkerType.None,
                     TrackerFormatString = "{0}\nf = {2:0.###} {XAxis.Title}\n{3} = {4:0.###}"
                 };

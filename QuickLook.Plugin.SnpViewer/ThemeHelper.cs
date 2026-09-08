@@ -43,6 +43,8 @@ internal sealed class PlotTheme
     public OxyColor GridMajor { get; set; }
     public OxyColor GridMinor { get; set; }
     public OxyColor AxisLine { get; set; }
+    public OxyColor LegendBg { get; set; }
+    public OxyColor LegendBorder { get; set; }
 
     public static PlotTheme Dark { get; } = new PlotTheme
     {
@@ -51,6 +53,8 @@ internal sealed class PlotTheme
         GridMajor = OxyColor.FromRgb(0x33, 0x33, 0x33),
         GridMinor = OxyColor.FromRgb(0x2A, 0x2A, 0x2A),
         AxisLine = OxyColor.FromRgb(0x80, 0x80, 0x80),
+        LegendBg = OxyColor.FromArgb(0xE6, 0x2D, 0x2D, 0x30),
+        LegendBorder = OxyColor.FromRgb(0x55, 0x55, 0x55),
     };
 
     public static PlotTheme Light { get; } = new PlotTheme
@@ -60,5 +64,7 @@ internal sealed class PlotTheme
         GridMajor = OxyColor.FromRgb(0xE0, 0xE0, 0xE0),
         GridMinor = OxyColor.FromRgb(0xED, 0xED, 0xED),
         AxisLine = OxyColor.FromRgb(0x80, 0x80, 0x80),
+        LegendBg = OxyColor.FromArgb(0xE6, 0xFF, 0xFF, 0xFF),
+        LegendBorder = OxyColor.FromRgb(0x99, 0x99, 0x99),
     };
 }
