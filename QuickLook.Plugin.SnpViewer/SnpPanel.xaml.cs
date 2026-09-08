@@ -2,7 +2,6 @@
 
 using System;
 using System.ComponentModel;
-using System.Data;
 using System.Globalization;
 using System.IO;
 using System.Linq;
@@ -63,12 +62,11 @@ public partial class SnpPanel : UserControl
         {
             SetBrush("PanelBg", light ? "#FFFFFF" : "#1E1E1E");
             SetBrush("PanelFg", light ? "#202020" : "#E0E0E0");
-            SetBrush("GridRowBg", light ? "#FFFFFF" : "#1E1E1E");
-            SetBrush("GridAltRowBg", light ? "#F5F5F5" : "#262626");
-            SetBrush("GridLine", light ? "#DDDDDD" : "#333333");
-            SetBrush("GridHeaderBg", light ? "#EAEAEA" : "#2D2D30");
-            SetBrush("GridHeaderFg", light ? "#202020" : "#E0E0E0");
-            SetBrush("TabCheckedBg", "#007ACC");
+        SetBrush("GridRowBg", light ? "#FFFFFF" : "#1E1E1E");
+        SetBrush("GridAltRowBg", light ? "#F5F5F5" : "#262626");
+        SetBrush("GridLine", light ? "#DDDDDD" : "#333333");
+        SetBrush("TabCheckedBg", "#007ACC");
+        SetBrush("TabBg", light ? "#EFEFEF" : "#2A2A2E");
             SetBrush("TabHoverBg", light ? "#E5E5E5" : "#3E3E42");
             SetBrush("WarningFg", light ? "#9A6B00" : "#E0A800");
             SetBrush("TrackerBg", light ? "#FFFFE0" : "#2D2D30");
@@ -120,10 +118,8 @@ public partial class SnpPanel : UserControl
             {
                 _vm.Summary = $"Failed to parse: {parseError.Message}";
                 _vm.BuildEmptyPlot();
-                _vm.RebuildDataGrid();
                 Plot.Model = _vm.PlotModel;
                 Plot.InvalidatePlot();
-                SyncDataGrid();
                 SyncHeader();
                 return;
             }
@@ -136,7 +132,6 @@ public partial class SnpPanel : UserControl
             YDb.IsChecked = true;
             XLinear.IsChecked = true;
             _vm.RebuildPlot(YAxisMode.Db, XAxisMode.Linear);
-            _vm.RebuildDataGrid();
             SyncWarnings();
             SyncHeader();
 
@@ -153,7 +148,7 @@ public partial class SnpPanel : UserControl
         {
             // Last-ditch net: never let a UI exception escape into the host.
             _vm.Summary = $"Render failed: {ex.Message}";
-            try { _vm.BuildEmptyPlot(); _vm.RebuildDataGrid(); SyncHeader(); } catch { /* ignored */ }
+            try { _vm.BuildEmptyPlot(); SyncHeader(); } catch { /* ignored */ }
         }
     }
 
@@ -188,16 +183,6 @@ public partial class SnpPanel : UserControl
         rebuild();
         Plot.Model = _vm.PlotModel;
         Plot.InvalidatePlot();
-    }
-
-    private void SyncDataGrid()
-    {
-        if (_vm is null) return;
-        // DataGrid cannot consume a DataTable object itself; it needs the
-        // DataView. Resetting ItemsSource forces column regeneration after
-        // RebuildDataGrid() rebuilt the table schema via DataTable.Reset().
-        DataGrid.ItemsSource = null;
-        DataGrid.ItemsSource = _vm.DataTable.DefaultView;
     }
 
     private void SyncWarnings()
@@ -246,7 +231,6 @@ public class SnpViewModel : INotifyPropertyChanged
     public string FileName { get; }
     public string Summary { get; set; } = string.Empty;
     public System.Collections.ObjectModel.ObservableCollection<string> Warnings { get; } = new();
-    public DataTable DataTable { get; } = new();
 
     private PlotModel _plotModel = new();
     public PlotModel PlotModel
@@ -409,6 +393,12 @@ public class SnpViewModel : INotifyPropertyChanged
             LegendSymbolLength = 24,
             LegendPadding = 8,
             LegendMargin = 8,
+            // Matrix layout: with Vertical orientation, items wrap into a new
+            // column once they exceed the available height. Clamping
+            // MaxHeight to N rows (padding + N x ~16px rows at 11pt) turns an
+            // N-port file's N^2 series into an N x N grid (s2p -> 2x2, ...).
+            LegendMaxHeight = 2 * 8 + _doc.PortCount * 16,
+            LegendColumnSpacing = 12,
         });
 
         Axis xAxis = x == XAxisMode.Log
@@ -417,6 +407,8 @@ public class SnpViewModel : INotifyPropertyChanged
         var yAxis = new LinearAxis { Position = AxisPosition.Left };
         StyleAxis(xAxis, $"Frequency ({_displayUnit})");
         StyleAxis(yAxis, YAxisTitle(y));
+        // Push the Y title left, away from the tick labels (default gap is 4).
+        yAxis.AxisTitleDistance = 14;
         pm.Axes.Add(xAxis);
         pm.Axes.Add(yAxis);
 
@@ -448,7 +440,7 @@ public class SnpViewModel : INotifyPropertyChanged
                 {
                     Title = $"{_doc.ParamType}{i + 1}{j + 1}",
                     Color = palette[colorIdx % palette.Length],
-                    StrokeThickness = 1.8,
+                    StrokeThickness = 1.2,
                     MarkerType = MarkerType.None,
                     TrackerFormatString = "{0}\nf = {2:0.###} {XAxis.Title}\n{3} = {4:0.###}"
                 };
@@ -487,54 +479,5 @@ public class SnpViewModel : INotifyPropertyChanged
         }
 
         PlotModel = pm;
-    }
-
-    public void RebuildDataGrid()
-    {
-        DataTable.Reset();
-        if (_doc is null || _doc.Points.Count == 0)
-            return;
-
-        int n = _doc.PortCount;
-
-        var freqCol = new DataColumn($"freq ({_displayUnit})", typeof(double));
-        DataTable.Columns.Add(freqCol);
-
-        for (int i = 0; i < n; i++)
-        {
-            for (int j = 0; j < n; j++)
-            {
-                var pij = $"{_doc.ParamType}{i + 1}{j + 1}";
-                DataTable.Columns.Add(new DataColumn($"{pij} re", typeof(double)));
-                DataTable.Columns.Add(new DataColumn($"{pij} im", typeof(double)));
-                DataTable.Columns.Add(new DataColumn($"{pij} dB", typeof(double)));
-            }
-        }
-
-        const int maxRows = 1000;
-        int take = Math.Min(_doc.Points.Count, maxRows);
-        bool truncated = _doc.Points.Count > maxRows;
-
-        for (int k = 0; k < take; k++)
-        {
-            var p = _doc.Points[k];
-            var row = DataTable.NewRow();
-            row[0] = ToDisplayFreq(p.Frequency);
-            int col = 1;
-            for (int i = 0; i < n; i++)
-            {
-                for (int j = 0; j < n; j++)
-                {
-                    var c = p.S[i, j];
-                    row[col++] = c.Real;
-                    row[col++] = c.Imaginary;
-                    row[col++] = c.Magnitude > 0 ? 20.0 * Math.Log10(c.Magnitude) : double.NaN;
-                }
-            }
-            DataTable.Rows.Add(row);
-        }
-
-        if (truncated)
-            Warnings.Add($"Preview truncated to first {maxRows} rows of {_doc.Points.Count}.");
     }
 }

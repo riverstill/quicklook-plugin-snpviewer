@@ -52,10 +52,9 @@ touch it:
   `Plugin.Init()` registers an `AppDomain.AssemblyResolve` handler probing our
   own directory (skipping `*.resources` and `QuickLook.Common`). Do not remove
   it; any new third-party dep rides on it automatically.
-- **No XAML binding for `Plot.Model` / grid source**: assign in code-behind
-  (`Plot.Model = ...; Plot.InvalidatePlot()`,
-  `DataGrid.ItemsSource = DataTable.DefaultView`). Binding a `DataTable`
-  object itself silently shows nothing — it must be `.DefaultView`.
+- **No XAML binding for `Plot.Model`**: assign in code-behind
+  (`Plot.Model = ...; Plot.InvalidatePlot()`). Going via DataContext/Binding
+  is racy on first show and needs manual invalidation on rebuilds.
 - `SnpPanel.LoadFile` is `async void` into the host: keep the whole
   parse+render inside try/catch and surface errors via `Summary`, never let
   exceptions escape (host shows "Failed to preview" otherwise).

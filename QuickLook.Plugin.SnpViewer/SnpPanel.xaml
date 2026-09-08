@@ -18,10 +18,9 @@
         <SolidColorBrush x:Key="GridRowBg" Color="#1E1E1E" />
         <SolidColorBrush x:Key="GridAltRowBg" Color="#262626" />
         <SolidColorBrush x:Key="GridLine" Color="#333333" />
-        <SolidColorBrush x:Key="GridHeaderBg" Color="#2D2D30" />
-        <SolidColorBrush x:Key="GridHeaderFg" Color="#E0E0E0" />
         <SolidColorBrush x:Key="TabCheckedBg" Color="#007ACC" />
         <SolidColorBrush x:Key="TabHoverBg" Color="#3E3E42" />
+        <SolidColorBrush x:Key="TabBg" Color="#2A2A2E" />
         <SolidColorBrush x:Key="WarningFg" Color="#E0A800" />
         <!-- Tracker (data-point tooltip) box colors, swapped per theme in code
              while the template itself stays fixed. -->
@@ -29,30 +28,6 @@
         <SolidColorBrush x:Key="TrackerBorder" Color="#808080" />
         <SolidColorBrush x:Key="TrackerFg" Color="#E0E0E0" />
         <SolidColorBrush x:Key="TrackerCrosshair" Color="#808080" />
-
-        <Style TargetType="DataGrid">
-            <Setter Property="Background" Value="{DynamicResource GridRowBg}" />
-            <Setter Property="Foreground" Value="{DynamicResource PanelFg}" />
-            <Setter Property="RowBackground" Value="{DynamicResource GridRowBg}" />
-            <Setter Property="AlternatingRowBackground" Value="{DynamicResource GridAltRowBg}" />
-            <Setter Property="GridLinesVisibility" Value="Horizontal" />
-            <Setter Property="HorizontalGridLinesBrush" Value="{DynamicResource GridLine}" />
-            <Setter Property="HeadersVisibility" Value="Column" />
-            <Setter Property="BorderThickness" Value="0" />
-        </Style>
-        <Style TargetType="DataGridColumnHeader">
-            <Setter Property="Background" Value="{DynamicResource GridHeaderBg}" />
-            <Setter Property="Foreground" Value="{DynamicResource GridHeaderFg}" />
-            <Setter Property="BorderBrush" Value="{DynamicResource GridLine}" />
-            <Setter Property="BorderThickness" Value="0,0,1,1" />
-            <Setter Property="Padding" Value="6,4" />
-            <Setter Property="FontWeight" Value="SemiBold" />
-        </Style>
-        <Style TargetType="DataGridCell">
-            <Setter Property="Background" Value="Transparent" />
-            <Setter Property="BorderThickness" Value="0" />
-            <Setter Property="Padding" Value="4,2" />
-        </Style>
 
         <!-- Flat pill look for the axis option radios. -->
         <Style x:Key="TabRadio" TargetType="RadioButton">
@@ -63,7 +38,7 @@
                 <Setter.Value>
                     <ControlTemplate TargetType="RadioButton">
                         <Border x:Name="Bd" CornerRadius="10" Padding="14,6"
-                                Background="Transparent"
+                                Background="{DynamicResource TabBg}"
                                 BorderBrush="{DynamicResource GridLine}" BorderThickness="1">
                             <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
                         </Border>
@@ -89,7 +64,6 @@
             <RowDefinition Height="Auto" />
             <RowDefinition Height="*" MinHeight="380" />
             <RowDefinition Height="Auto" />
-            <RowDefinition Height="150" />
         </Grid.RowDefinitions>
 
         <!-- Header: waveform icon + big title + dimmed subtitle on the left,
@@ -116,9 +90,9 @@
                     BorderBrush="{DynamicResource GridLine}" BorderThickness="1"
                     VerticalAlignment="Center" Margin="12,0,0,0">
                 <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                    <Path Data="M4,0 H10 L14,4 V18 H4 Z M10,0 V4 H14" Width="13" Height="14"
-                          Stretch="Uniform" Fill="{DynamicResource PanelFg}" Opacity="0.8"
-                          VerticalAlignment="Center" />
+                    <Path Data="M5,0 H15 L21,6 V26 H5 Z M15,0 V6 H21" Width="19" Height="22"
+                          Stretch="Uniform" Stroke="{DynamicResource PanelFg}" StrokeThickness="1.6"
+                          Fill="Transparent" Opacity="0.8" VerticalAlignment="Center" />
                     <TextBlock x:Name="FilePillText" FontSize="12" Margin="7,0,0,0"
                                Foreground="{DynamicResource PanelFg}" VerticalAlignment="Center" />
                 </StackPanel>
@@ -171,16 +145,5 @@
                 <RadioButton x:Name="XLog" Content="Log" GroupName="X" Style="{StaticResource TabRadio}" Checked="XLog_OnChecked" />
             </StackPanel>
         </Border>
-
-        <!-- Data preview. NOTE: ItemsSource is assigned in code-behind
-             (SyncDataGrid) to DataTable.DefaultView. Binding a DataTable
-             object itself does not work - DataGrid needs the DataView. -->
-        <DataGrid Grid.Row="4" x:Name="DataGrid"
-                  AutoGenerateColumns="True"
-                  IsReadOnly="True"
-                  EnableRowVirtualization="True"
-                  CanUserAddRows="False"
-                  CanUserDeleteRows="False"
-                  SelectionUnit="FullRow" />
     </Grid>
 </UserControl>
