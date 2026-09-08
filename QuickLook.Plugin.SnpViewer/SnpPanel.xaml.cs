@@ -358,9 +358,10 @@ public class SnpViewModel : INotifyPropertyChanged
         pm.Padding = new OxyThickness(8, 8, 0, 8);
         pm.PlotMargins = new OxyThickness(double.NaN, double.NaN, 0, double.NaN);
     }
-
-    private void StyleAxis(Axis axis, string title)    {
+    private void StyleAxis(Axis axis, string title)
+    {
         axis.Title = title;
+        axis.TitleFontSize = 13;
         axis.TitleColor = _theme.Fg;
         axis.TextColor = _theme.Fg;
         axis.AxislineColor = _theme.AxisLine;

@@ -77,10 +77,10 @@
                 <ColumnDefinition Width="Auto" />
             </Grid.ColumnDefinitions>
             <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center" Margin="44,0,0,0">
-                <Path Data="M2,20 L8,20 L11,6 L17,34 L20,20 L26,20" Width="26" Height="22"
+                <Path Data="M2,20 L8,20 L11,6 L17,34 L20,20 L26,20" Width="32" Height="27"
                       Stretch="Uniform" Stroke="{DynamicResource TabCheckedBg}"
                       StrokeThickness="2.5" StrokeLineJoin="Round" StrokeStartLineCap="Round"
-                      StrokeEndLineCap="Round" VerticalAlignment="Center" />
+                      StrokeEndLineCap="Round" VerticalAlignment="Center" Margin="-30,0,30,0" />
                 <StackPanel Margin="10,0,0,0" VerticalAlignment="Center">
                     <TextBlock Text="S-Parameters" FontSize="20" FontWeight="Bold"
                                Foreground="{DynamicResource PanelFg}" />
@@ -89,11 +89,11 @@
                                TextTrimming="CharacterEllipsis" Margin="0,2,0,0" />
                 </StackPanel>
             </StackPanel>
-            <Border Grid.Column="1" CornerRadius="8" Padding="12,7"
+            <Border Grid.Column="1" CornerRadius="8" Padding="12,10"
                     BorderBrush="{DynamicResource GridLine}" BorderThickness="1"
                     VerticalAlignment="Center" Margin="12,0,0,0">
                 <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                    <Path Data="M5,0 H15 L21,6 V26 H5 Z M15,0 V6 H21" Width="14" Height="16"
+                    <Path Data="M5,0 H15 L21,6 V26 H5 Z M15,0 V6 H21" Width="18" Height="19"
                           Stretch="Uniform" Stroke="{DynamicResource PanelFg}" StrokeThickness="1.6"
                           Fill="Transparent" Opacity="0.8" VerticalAlignment="Center" />
                     <TextBlock x:Name="FilePillText" FontSize="12" Margin="7,0,0,0"
@@ -143,7 +143,7 @@
                 <RadioButton x:Name="YReal" Content="实部" GroupName="Y" Style="{StaticResource TabRadio}" Checked="YReal_OnChecked" />
                 <RadioButton x:Name="YImag" Content="虚部" GroupName="Y" Style="{StaticResource TabRadio}" Checked="YImag_OnChecked" />
                 <RadioButton x:Name="YPhase" Content="相位 (°)" GroupName="Y" Style="{StaticResource TabRadio}" Checked="YPhase_OnChecked" />
-                <Rectangle Width="1" Margin="12,2,12,2" Fill="{DynamicResource GridLine}" VerticalAlignment="Stretch" />
+                <Rectangle Width="1" Margin="12,7,12,7" Fill="{DynamicResource GridLine}" VerticalAlignment="Stretch" />
                 <TextBlock x:Name="XAxisLabel" Text="X轴：" VerticalAlignment="Center" Margin="0,0,8,0" Foreground="{DynamicResource PanelFg}" />
                 <RadioButton x:Name="XLinear" Content="线性" GroupName="X" Style="{StaticResource TabRadio}" Checked="XLinear_OnChecked" />
                 <RadioButton x:Name="XLog" Content="对数" GroupName="X" Style="{StaticResource TabRadio}" Checked="XLog_OnChecked" />
