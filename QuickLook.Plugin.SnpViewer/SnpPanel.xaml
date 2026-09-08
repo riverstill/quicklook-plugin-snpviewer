@@ -67,8 +67,11 @@
         </Grid.RowDefinitions>
 
         <!-- Header: waveform icon + big title + dimmed subtitle on the left,
-             filename pill on the right. (Filename is also in the host title.) -->
-        <Grid Grid.Row="0" Margin="0,0,0,10">
+             filename pill on the right. The whole row shares the same
+             left/right inset as plot and options so all right edges align.
+             The Y axis line (auto margin, ~96px from outer left) passes
+             between the icon and the title text. -->
+        <Grid Grid.Row="0" Margin="20,0,20,10">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*" />
                 <ColumnDefinition Width="Auto" />
@@ -78,7 +81,7 @@
                       Stretch="Uniform" Stroke="{DynamicResource TabCheckedBg}"
                       StrokeThickness="2.5" StrokeLineJoin="Round" StrokeStartLineCap="Round"
                       StrokeEndLineCap="Round" VerticalAlignment="Center" />
-                <StackPanel Margin="10,0,0,0" VerticalAlignment="Center">
+                <StackPanel Margin="50,0,0,0" VerticalAlignment="Center">
                     <TextBlock Text="S-Parameters" FontSize="20" FontWeight="Bold"
                                Foreground="{DynamicResource PanelFg}" />
                     <TextBlock x:Name="HeaderSubtitle" FontSize="12" Opacity="0.7"
@@ -102,9 +105,10 @@
         <!-- Slim warning bar (only visible when the parser emitted warnings). -->
         <TextBlock x:Name="WarningBar" Grid.Row="1" Visibility="Collapsed"
                    TextWrapping="Wrap" Foreground="{DynamicResource WarningFg}"
-                   FontSize="11" Margin="0,0,0,6" />
+                   FontSize="11" Margin="20,0,20,6" />
         <!-- Plot -->
-        <Border Grid.Row="2" Background="{DynamicResource PanelBg}" CornerRadius="4" Padding="4,4,0,4">
+        <Border Grid.Row="2" Background="{DynamicResource PanelBg}" CornerRadius="4" Padding="4,4,0,4"
+                Margin="20,0,20,0">
             <oxy:PlotView x:Name="Plot">
                 <!-- Tracker (hover tooltip) template. The stone-cold default
                      is a pale-yellow box whose TextBlock has no explicit
@@ -131,7 +135,7 @@
 
         <!-- Axis options as pills in a rounded bar, Y group | X group -->
         <Border Grid.Row="3" CornerRadius="8" Padding="12,9"
-                BorderBrush="{DynamicResource GridLine}" BorderThickness="1" Margin="0,8,0,8">
+                BorderBrush="{DynamicResource GridLine}" BorderThickness="1" Margin="20,8,20,8">
             <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                 <TextBlock Text="Y-axis:" VerticalAlignment="Center" Margin="0,0,8,0" Foreground="{DynamicResource PanelFg}" />
                 <RadioButton x:Name="YDb" Content="dB" GroupName="Y" Style="{StaticResource TabRadio}" Checked="YDb_OnChecked" />
