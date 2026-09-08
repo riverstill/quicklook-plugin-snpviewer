@@ -84,3 +84,55 @@ touch it:
 - Deps: `OxyPlot.Wpf 2.1.2` (NOT 2.2+: `IsLegendEnabled`/`LegendPosition` don't
   exist there), `QuickLook.Common 4.5.0` via NuGet (never a submodule).
 - `net462` has no `string.Contains(x, StringComparison)` — use `IndexOf`.
+- `ThemeHelper.cs` — `ThemeHelper` (system light/dark via `AppsUseLightTheme`,
+  `PlotTheme` palettes incl. legend colors), `Lang` (zh-* → Chinese else
+  English, read once via `CurrentUICulture`, all UI strings via `Lang.Pick`).
+
+## Workflow (owner rules — do not skip)
+
+- **Review before push**: never commit or push without the owner's explicit
+  confirmation. Show the diff first.
+- The words "推送 / 提交 / 发版" (push / commit / release) **are** the approval —
+  execute immediately, no further questions.
+- Release procedure (all steps, in order):
+  1. Bump `<Version>` in `QuickLook.Plugin.Metadata.config`, commit only that file.
+  2. `git tag vX.Y.Z`, push main + tag.
+  3. Wait for the **tag** CI run (workflow also runs on `v*` tags).
+  4. Download the tag-run artifact, verify the 6 zip entries + metadata version.
+  5. `gh release create vX.Y.Z <qlplugin> --title ... --notes ...` with
+     bilingual (zh/en) notes. Docs-only changes never need a re-release.
+
+## OxyPlot 2.1.2 pinned facts (each verified against source, not memory)
+
+- `PlotModel.Legends` is **empty by default** — add an explicit `Legend`,
+  otherwise series titles never render.
+- `Legend` has **no corner-radius property** (`DrawRectangle` only) — a boxed
+  legend is always square; don't promise rounded.
+- **Legend matrix**: `Vertical` items wrap to a new column when they exceed the
+  available height, and Inside legends get `min(plotArea, LegendMaxHeight)`.
+  So `LegendMaxHeight = 32 + N*18` (2×Margin + 2×Padding + N×~15px rows at
+  11pt) yields an N×N grid (s2p → 2×2). Recalibrate if the font size changes;
+  the wrap condition is `y + h > available - padding` in
+  `Legends/Legend.Rendering.cs`.
+- `Axis.AxisTitleDistance` defaults to **4**; Y title needed 14 to clear labels.
+- Tracker text uses `{0}` title / `{1}` X-title / `{2}` X / `{3}` Y-title /
+  `{4}` Y. There is **no** `PlotModel.DefaultTrackerFormatString` in 2.1.2 —
+  set `TrackerFormatString` per series (named `{XAxis.Title}` also resolves via
+  `StringHelper` reflection, but index tokens are clearer).
+- Right side has no axis/title, so `Padding.Right = 0` + `PlotMargins.Right = 0`
+  pins the plot area to the container edge; other sides stay NaN (auto).
+- The `oxy:` xmlns maps the Shared assembly too, so `oxy:TrackerControl` in
+  BAML resolves like `oxy:PlotView` — the earlier "tracker template crashes
+  BAML" theory was wrong; the real killer was the frozen brush (see gotchas).
+
+## Parser / rendering caps (robustness contract)
+
+- `TouchstoneParser` accumulates wrapped rows: a new point starts only when the
+  previous one is complete (`n²×2` values) — value-only continuation lines must
+  never be parsed as frequencies (that produced negative-frequency garbage).
+- Cap parser warnings at 100 (`AddWarning`), warning bar shows 4
+  (`SyncWarnings`), plot decimates to ≤ 4000 pts/series (`plotEvery`).
+  Pathological files must degrade, never hang or bloat the UI.
+- Parser changes require a regression test with real pasted data
+  (see the wrapped-s4p test) — temp files need the real extension (`.s4p`)
+  or port-count sniffing defaults to 2.
