@@ -2,9 +2,13 @@
 
 # QuickLook.Plugin.SnpViewer
 
+[English](README_EN.md)
+
 一个 [QuickLook](https://github.com/QL-Win/QuickLook) 插件（Windows），在资源管理器里选中
 Touchstone S 参数文件（`.s1p`、`.s2p`、…、`.snp`、`.ts`）后按**空格**，即可以
 OxyPlot 图表的形式预览频响曲线。
+
+![screenshot](screenshot.png)
 
 ## 功能
 
