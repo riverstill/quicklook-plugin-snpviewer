@@ -141,8 +141,6 @@ public partial class SnpPanel : UserControl
             // subsequent rebuilds need to invalidate the visual.
             Plot.Model = _vm.PlotModel;
             Plot.InvalidatePlot();
-
-            SyncDataGrid();
         }
         catch (Exception ex)
         {
