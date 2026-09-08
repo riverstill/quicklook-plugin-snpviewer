@@ -93,7 +93,7 @@
                     BorderBrush="{DynamicResource GridLine}" BorderThickness="1"
                     VerticalAlignment="Center" Margin="12,0,0,0">
                 <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                    <Path Data="M5,0 H15 L21,6 V26 H5 Z M15,0 V6 H21" Width="20" Height="21"
+                    <Path Data="M3,0 H15 L20,5 V22 H3 Z M15,0 V5 H20" Width="20" Height="19"
                           Stretch="Uniform" Stroke="{DynamicResource PanelFg}" StrokeThickness="1.6"
                           Fill="Transparent" Opacity="0.8" VerticalAlignment="Center" />
                     <TextBlock x:Name="FilePillText" FontSize="12" Margin="7,0,0,0"
