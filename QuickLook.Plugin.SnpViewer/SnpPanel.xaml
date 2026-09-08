@@ -81,7 +81,7 @@
                       Stretch="Uniform" Stroke="{DynamicResource TabCheckedBg}"
                       StrokeThickness="2.5" StrokeLineJoin="Round" StrokeStartLineCap="Round"
                       StrokeEndLineCap="Round" VerticalAlignment="Center" Margin="-30,0,30,0" />
-                <StackPanel Margin="10,0,0,0" VerticalAlignment="Center">
+                <StackPanel Margin="0,0,0,0" VerticalAlignment="Center">
                     <TextBlock Text="S-Parameters" FontSize="20" FontWeight="Bold"
                                Foreground="{DynamicResource PanelFg}" />
                     <TextBlock x:Name="HeaderSubtitle" FontSize="12" Opacity="0.7"
@@ -93,7 +93,7 @@
                     BorderBrush="{DynamicResource GridLine}" BorderThickness="1"
                     VerticalAlignment="Center" Margin="12,0,0,0">
                 <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                    <Path Data="M5,0 H15 L21,6 V26 H5 Z M15,0 V6 H21" Width="18" Height="19"
+                    <Path Data="M5,0 H15 L21,6 V26 H5 Z M15,0 V6 H21" Width="18" Height="16"
                           Stretch="Uniform" Stroke="{DynamicResource PanelFg}" StrokeThickness="1.6"
                           Fill="Transparent" Opacity="0.8" VerticalAlignment="Center" />
                     <TextBlock x:Name="FilePillText" FontSize="12" Margin="7,0,0,0"
@@ -136,18 +136,27 @@
         <!-- Axis options as pills in a rounded bar, Y group | X group -->
         <Border Grid.Row="3" CornerRadius="8" Padding="12,9"
                 BorderBrush="{DynamicResource GridLine}" BorderThickness="1" Margin="20,8,20,8">
-            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                <TextBlock x:Name="YAxisLabel" Text="Y轴：" VerticalAlignment="Center" Margin="0,0,8,0" Foreground="{DynamicResource PanelFg}" />
-                <RadioButton x:Name="YDb" Content="dB" GroupName="Y" Style="{StaticResource TabRadio}" Checked="YDb_OnChecked" />
-                <RadioButton x:Name="YMagnitude" Content="幅值" GroupName="Y" Style="{StaticResource TabRadio}" Checked="YMagnitude_OnChecked" />
-                <RadioButton x:Name="YReal" Content="实部" GroupName="Y" Style="{StaticResource TabRadio}" Checked="YReal_OnChecked" />
-                <RadioButton x:Name="YImag" Content="虚部" GroupName="Y" Style="{StaticResource TabRadio}" Checked="YImag_OnChecked" />
-                <RadioButton x:Name="YPhase" Content="相位 (°)" GroupName="Y" Style="{StaticResource TabRadio}" Checked="YPhase_OnChecked" />
-                <Rectangle Width="1" Margin="12,7,12,7" Fill="{DynamicResource GridLine}" VerticalAlignment="Stretch" />
-                <TextBlock x:Name="XAxisLabel" Text="X轴：" VerticalAlignment="Center" Margin="0,0,8,0" Foreground="{DynamicResource PanelFg}" />
-                <RadioButton x:Name="XLinear" Content="线性" GroupName="X" Style="{StaticResource TabRadio}" Checked="XLinear_OnChecked" />
-                <RadioButton x:Name="XLog" Content="对数" GroupName="X" Style="{StaticResource TabRadio}" Checked="XLog_OnChecked" />
-            </StackPanel>
+            <!-- Y group left, X group right, divider pinned to the exact
+                 horizontal center via overlay (all three share one cell).
+                 Narrow windows (<~700px) could overlap the groups; the
+                 default 1150px window has ample room. -->
+            <Grid VerticalAlignment="Center">
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Left" VerticalAlignment="Center">
+                    <TextBlock x:Name="YAxisLabel" Text="Y轴：" VerticalAlignment="Center" Margin="0,0,8,0" Foreground="{DynamicResource PanelFg}" />
+                    <RadioButton x:Name="YDb" Content="dB" GroupName="Y" Style="{StaticResource TabRadio}" Checked="YDb_OnChecked" />
+                    <RadioButton x:Name="YMagnitude" Content="幅值" GroupName="Y" Style="{StaticResource TabRadio}" Checked="YMagnitude_OnChecked" />
+                    <RadioButton x:Name="YReal" Content="实部" GroupName="Y" Style="{StaticResource TabRadio}" Checked="YReal_OnChecked" />
+                    <RadioButton x:Name="YImag" Content="虚部" GroupName="Y" Style="{StaticResource TabRadio}" Checked="YImag_OnChecked" />
+                    <RadioButton x:Name="YPhase" Content="相位 (°)" GroupName="Y" Style="{StaticResource TabRadio}" Checked="YPhase_OnChecked" />
+                </StackPanel>
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
+                    <TextBlock x:Name="XAxisLabel" Text="X轴：" VerticalAlignment="Center" Margin="0,0,8,0" Foreground="{DynamicResource PanelFg}" />
+                    <RadioButton x:Name="XLinear" Content="线性" GroupName="X" Style="{StaticResource TabRadio}" Checked="XLinear_OnChecked" />
+                    <RadioButton x:Name="XLog" Content="对数" GroupName="X" Style="{StaticResource TabRadio}" Checked="XLog_OnChecked" />
+                </StackPanel>
+                <Rectangle Width="1" Margin="0,7" Fill="{DynamicResource GridLine}"
+                           HorizontalAlignment="Center" VerticalAlignment="Stretch" />
+            </Grid>
         </Border>
     </Grid>
 </UserControl>
