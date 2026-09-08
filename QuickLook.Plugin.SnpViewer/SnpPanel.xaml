@@ -93,7 +93,7 @@
                     BorderBrush="{DynamicResource GridLine}" BorderThickness="1"
                     VerticalAlignment="Center" Margin="12,0,0,0">
                 <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                    <Path Data="M5,0 H15 L21,6 V26 H5 Z M15,0 V6 H21" Width="18" Height="16"
+                    <Path Data="M5,0 H15 L21,6 V26 H5 Z M15,0 V6 H21" Width="20" Height="21"
                           Stretch="Uniform" Stroke="{DynamicResource PanelFg}" StrokeThickness="1.6"
                           Fill="Transparent" Opacity="0.8" VerticalAlignment="Center" />
                     <TextBlock x:Name="FilePillText" FontSize="12" Margin="7,0,0,0"
@@ -136,12 +136,16 @@
         <!-- Axis options as pills in a rounded bar, Y group | X group -->
         <Border Grid.Row="3" CornerRadius="8" Padding="12,9"
                 BorderBrush="{DynamicResource GridLine}" BorderThickness="1" Margin="20,8,20,8">
-            <!-- Y group left, X group right, divider pinned to the exact
-                 horizontal center via overlay (all three share one cell).
-                 Narrow windows (<~700px) could overlap the groups; the
-                 default 1150px window has ample room. -->
+            <!-- Two equal halves: Y group left-aligned in the left half,
+                 X group left-aligned in the right half (hugging the
+                 divider), divider pinned to the exact horizontal center
+                 by spanning both columns. -->
             <Grid VerticalAlignment="Center">
-                <StackPanel Orientation="Horizontal" HorizontalAlignment="Left" VerticalAlignment="Center">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+                <StackPanel Grid.Column="0" Orientation="Horizontal" HorizontalAlignment="Left" VerticalAlignment="Center">
                     <TextBlock x:Name="YAxisLabel" Text="Y轴：" VerticalAlignment="Center" Margin="0,0,8,0" Foreground="{DynamicResource PanelFg}" />
                     <RadioButton x:Name="YDb" Content="dB" GroupName="Y" Style="{StaticResource TabRadio}" Checked="YDb_OnChecked" />
                     <RadioButton x:Name="YMagnitude" Content="幅值" GroupName="Y" Style="{StaticResource TabRadio}" Checked="YMagnitude_OnChecked" />
@@ -149,12 +153,12 @@
                     <RadioButton x:Name="YImag" Content="虚部" GroupName="Y" Style="{StaticResource TabRadio}" Checked="YImag_OnChecked" />
                     <RadioButton x:Name="YPhase" Content="相位 (°)" GroupName="Y" Style="{StaticResource TabRadio}" Checked="YPhase_OnChecked" />
                 </StackPanel>
-                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
+                <StackPanel Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Left" VerticalAlignment="Center" Margin="12,0,0,0">
                     <TextBlock x:Name="XAxisLabel" Text="X轴：" VerticalAlignment="Center" Margin="0,0,8,0" Foreground="{DynamicResource PanelFg}" />
                     <RadioButton x:Name="XLinear" Content="线性" GroupName="X" Style="{StaticResource TabRadio}" Checked="XLinear_OnChecked" />
                     <RadioButton x:Name="XLog" Content="对数" GroupName="X" Style="{StaticResource TabRadio}" Checked="XLog_OnChecked" />
                 </StackPanel>
-                <Rectangle Width="1" Margin="0,7" Fill="{DynamicResource GridLine}"
+                <Rectangle Grid.ColumnSpan="2" Width="1" Margin="0,7" Fill="{DynamicResource GridLine}"
                            HorizontalAlignment="Center" VerticalAlignment="Stretch" />
             </Grid>
         </Border>
