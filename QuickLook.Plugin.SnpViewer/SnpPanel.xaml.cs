@@ -306,10 +306,10 @@ public class SnpViewModel : INotifyPropertyChanged
             var fmin = ToDisplayFreq(doc.Points.First().Frequency);
             var fmax = ToDisplayFreq(doc.Points.Last().Frequency);
             Summary =
-                $"{doc.PortCount}-port · {doc.ParamType} · {doc.DataFormat} · " +
+                $"{doc.PortCount}端口 · {doc.ParamType} · {doc.DataFormat} · " +
                 $"f ∈ [{fmin.ToString("G4", CultureInfo.InvariantCulture)}, " +
                 $"{fmax.ToString("G4", CultureInfo.InvariantCulture)}] {_displayUnit} · " +
-                $"{doc.Points.Count} samples · R = {doc.ReferenceResistance} Ω";
+                $"{doc.Points.Count} 点 · R = {doc.ReferenceResistance} Ω";
         }
 
         foreach (var w in doc.Warnings)
@@ -318,11 +318,11 @@ public class SnpViewModel : INotifyPropertyChanged
 
     private static string YAxisTitle(YAxisMode y) => y switch
     {
-        YAxisMode.Db => "Magnitude (dB)",
-        YAxisMode.Magnitude => "Magnitude",
-        YAxisMode.Real => "Real",
-        YAxisMode.Imaginary => "Imaginary",
-        YAxisMode.Phase => "Phase (°)",
+        YAxisMode.Db => "幅值 (dB)",
+        YAxisMode.Magnitude => "幅值",
+        YAxisMode.Real => "实部",
+        YAxisMode.Imaginary => "虚部",
+        YAxisMode.Phase => "相位 (°)",
         _ => y.ToString()
     };
 
@@ -360,8 +360,8 @@ public class SnpViewModel : INotifyPropertyChanged
         PinPlotAreaRight(pm);
         var xb = new LinearAxis { Position = AxisPosition.Bottom };
         var yl = new LinearAxis { Position = AxisPosition.Left };
-        StyleAxis(xb, "Frequency");
-        StyleAxis(yl, "Value");
+        StyleAxis(xb, "频率");
+        StyleAxis(yl, "数值");
         pm.Axes.Add(xb);
         pm.Axes.Add(yl);
         PlotModel = pm;
@@ -416,7 +416,7 @@ public class SnpViewModel : INotifyPropertyChanged
             ? new LogarithmicAxis { Position = AxisPosition.Bottom, Base = 10 }
             : new LinearAxis { Position = AxisPosition.Bottom };
         var yAxis = new LinearAxis { Position = AxisPosition.Left };
-        StyleAxis(xAxis, $"Frequency ({_displayUnit})");
+        StyleAxis(xAxis, $"频率 ({_displayUnit})");
         StyleAxis(yAxis, YAxisTitle(y));
         // Push the Y title left, away from the tick labels (default gap is 4).
         yAxis.AxisTitleDistance = 14;
@@ -453,7 +453,7 @@ public class SnpViewModel : INotifyPropertyChanged
                     Color = palette[colorIdx % palette.Length],
                     StrokeThickness = 1.2,
                     MarkerType = MarkerType.None,
-                    TrackerFormatString = "{0}\nf = {2:0.###} {XAxis.Title}\n{3} = {4:0.###}"
+                    TrackerFormatString = "{0}\n{2:0.###} {1}\n{4:0.###} {3}"
                 };
 
                 for (int k = 0; k < _doc.Points.Count; k += plotEvery)
