@@ -76,7 +76,7 @@
                 <ColumnDefinition Width="*" />
                 <ColumnDefinition Width="Auto" />
             </Grid.ColumnDefinitions>
-            <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
+            <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center" Margin="44,0,0,0">
                 <Path Data="M2,20 L8,20 L11,6 L17,34 L20,20 L26,20" Width="26" Height="22"
                       Stretch="Uniform" Stroke="{DynamicResource TabCheckedBg}"
                       StrokeThickness="2.5" StrokeLineJoin="Round" StrokeStartLineCap="Round"
