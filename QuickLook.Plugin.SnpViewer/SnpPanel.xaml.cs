@@ -380,7 +380,7 @@ public class SnpViewModel : INotifyPropertyChanged
         // nothing renders even though series carry Titles (S11, S21, ...).
         pm.Legends.Add(new OxyPlot.Legends.Legend
         {
-            LegendPosition = OxyPlot.Legends.LegendPosition.TopRight,
+            LegendPosition = OxyPlot.Legends.LegendPosition.RightBottom,
             LegendPlacement = OxyPlot.Legends.LegendPlacement.Inside,
             LegendOrientation = OxyPlot.Legends.LegendOrientation.Vertical,
             LegendBackground = _theme.LegendBg,
@@ -392,10 +392,12 @@ public class SnpViewModel : INotifyPropertyChanged
             LegendPadding = 8,
             LegendMargin = 8,
             // Matrix layout: with Vertical orientation, items wrap into a new
-            // column once they exceed the available height. Clamping
-            // MaxHeight to N rows (padding + N x ~16px rows at 11pt) turns an
-            // N-port file's N^2 series into an N x N grid (s2p -> 2x2, ...).
-            LegendMaxHeight = 2 * 8 + _doc.PortCount * 16,
+            // column once they exceed the available height. Inside legends get
+            // min(plotArea, MaxHeight) minus 2xMargin, then minus padding, so
+            // budget 2xMargin + 2xPadding + N x 18px rows (11pt rows measure
+            // ~15px; verified against 2.1.2 Legend.Rendering wrap logic).
+            // An N-port file's N^2 series then form an N x N grid.
+            LegendMaxHeight = 32 + _doc.PortCount * 18,
             LegendColumnSpacing = 12,
         });
 
