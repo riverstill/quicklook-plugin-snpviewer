@@ -326,6 +326,15 @@ public class SnpViewModel : INotifyPropertyChanged
         _ => y.ToString()
     };
 
+    // Pin the coordinate area's right edge to the container: the right side
+    // carries no axis/tick/title, so both the outer padding and the margin
+    // can go to 0 there while left/top/bottom stay automatic.
+    private static void PinPlotAreaRight(PlotModel pm)
+    {
+        pm.Padding = new OxyThickness(8, 8, 0, 8);
+        pm.PlotMargins = new OxyThickness(double.NaN, double.NaN, 0, double.NaN);
+    }
+
     private void StyleAxis(Axis axis, string title)    {
         axis.Title = title;
         axis.TitleColor = _theme.Fg;
@@ -348,6 +357,7 @@ public class SnpViewModel : INotifyPropertyChanged
             PlotAreaBackground = _theme.Bg,
             TextColor = _theme.Fg
         };
+        PinPlotAreaRight(pm);
         var xb = new LinearAxis { Position = AxisPosition.Bottom };
         var yl = new LinearAxis { Position = AxisPosition.Left };
         StyleAxis(xb, "Frequency");
@@ -375,6 +385,7 @@ public class SnpViewModel : INotifyPropertyChanged
             PlotAreaBackground = _theme.Bg,
             TextColor = _theme.Fg
         };
+        PinPlotAreaRight(pm);
         // Boxed legend, top-right inside the plot area. The Legends
         // collection is empty by default in OxyPlot 2.x, so without this
         // nothing renders even though series carry Titles (S11, S21, ...).
