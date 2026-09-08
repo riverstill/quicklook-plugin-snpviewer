@@ -31,6 +31,31 @@ internal static class ThemeHelper
 }
 
 /// <summary>
+/// UI language follows the Windows display language: Chinese strings only
+/// when the system UI culture is zh-*, English otherwise. Evaluated once
+/// (panels are short-lived).
+/// </summary>
+internal static class Lang
+{
+    public static bool IsZh { get; } = DetectZh();
+
+    private static bool DetectZh()
+    {
+        try
+        {
+            return System.Globalization.CultureInfo.CurrentUICulture.Name
+                .StartsWith("zh", System.StringComparison.OrdinalIgnoreCase);
+        }
+        catch
+        {
+            return false;
+        }
+    }
+
+    public static string Pick(string zh, string en) => IsZh ? zh : en;
+}
+
+/// <summary>
 /// OxyPlot colors for one UI theme. The panel XAML brushes
 /// (PanelBg/PanelFg/...) are the WPF-side counterpart, swapped in
 /// <see cref="SnpPanel.ApplyPanelTheme"/>.

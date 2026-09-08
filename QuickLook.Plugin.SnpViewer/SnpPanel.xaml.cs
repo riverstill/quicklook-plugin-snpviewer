@@ -54,6 +54,28 @@ public partial class SnpPanel : UserControl
         {
             Console.WriteLine("SnpPanel radio init failed: " + ex);
         }
+
+        try
+        {
+            ApplyLanguage();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine("SnpPanel language init failed: " + ex);
+        }
+    }
+
+    private void ApplyLanguage()
+    {
+        YAxisLabel.Text = Lang.Pick("Y轴：", "Y-axis:");
+        XAxisLabel.Text = Lang.Pick("X轴：", "X-axis:");
+        // dB is a unit symbol, identical in both languages.
+        YMagnitude.Content = Lang.Pick("幅值", "Magnitude");
+        YReal.Content = Lang.Pick("实部", "Real");
+        YImag.Content = Lang.Pick("虚部", "Imaginary");
+        YPhase.Content = Lang.Pick("相位 (°)", "Phase (°)");
+        XLinear.Content = Lang.Pick("线性", "Linear");
+        XLog.Content = Lang.Pick("对数", "Log");
     }
 
     private void ApplyPanelTheme(bool light)
@@ -306,10 +328,12 @@ public class SnpViewModel : INotifyPropertyChanged
             var fmin = ToDisplayFreq(doc.Points.First().Frequency);
             var fmax = ToDisplayFreq(doc.Points.Last().Frequency);
             Summary =
-                $"{doc.PortCount}端口 · {doc.ParamType} · {doc.DataFormat} · " +
+                Lang.Pick($"{doc.PortCount}端口", $"{doc.PortCount}-port") + " · " +
+                $"{doc.ParamType} · {doc.DataFormat} · " +
                 $"f ∈ [{fmin.ToString("G4", CultureInfo.InvariantCulture)}, " +
                 $"{fmax.ToString("G4", CultureInfo.InvariantCulture)}] {_displayUnit} · " +
-                $"{doc.Points.Count} 点 · R = {doc.ReferenceResistance} Ω";
+                Lang.Pick($"{doc.Points.Count} 点", $"{doc.Points.Count} samples") + " · " +
+                $"R = {doc.ReferenceResistance} Ω";
         }
 
         foreach (var w in doc.Warnings)
@@ -318,11 +342,11 @@ public class SnpViewModel : INotifyPropertyChanged
 
     private static string YAxisTitle(YAxisMode y) => y switch
     {
-        YAxisMode.Db => "幅值 (dB)",
-        YAxisMode.Magnitude => "幅值",
-        YAxisMode.Real => "实部",
-        YAxisMode.Imaginary => "虚部",
-        YAxisMode.Phase => "相位 (°)",
+        YAxisMode.Db => Lang.Pick("幅值 (dB)", "Magnitude (dB)"),
+        YAxisMode.Magnitude => Lang.Pick("幅值", "Magnitude"),
+        YAxisMode.Real => Lang.Pick("实部", "Real"),
+        YAxisMode.Imaginary => Lang.Pick("虚部", "Imaginary"),
+        YAxisMode.Phase => Lang.Pick("相位 (°)", "Phase (°)"),
         _ => y.ToString()
     };
 
@@ -360,8 +384,8 @@ public class SnpViewModel : INotifyPropertyChanged
         PinPlotAreaRight(pm);
         var xb = new LinearAxis { Position = AxisPosition.Bottom };
         var yl = new LinearAxis { Position = AxisPosition.Left };
-        StyleAxis(xb, "频率");
-        StyleAxis(yl, "数值");
+        StyleAxis(xb, Lang.Pick("频率", "Frequency"));
+        StyleAxis(yl, Lang.Pick("数值", "Value"));
         pm.Axes.Add(xb);
         pm.Axes.Add(yl);
         PlotModel = pm;
@@ -416,7 +440,7 @@ public class SnpViewModel : INotifyPropertyChanged
             ? new LogarithmicAxis { Position = AxisPosition.Bottom, Base = 10 }
             : new LinearAxis { Position = AxisPosition.Bottom };
         var yAxis = new LinearAxis { Position = AxisPosition.Left };
-        StyleAxis(xAxis, $"频率 ({_displayUnit})");
+        StyleAxis(xAxis, Lang.Pick($"频率 ({_displayUnit})", $"Frequency ({_displayUnit})"));
         StyleAxis(yAxis, YAxisTitle(y));
         // Push the Y title left, away from the tick labels (default gap is 4).
         yAxis.AxisTitleDistance = 14;

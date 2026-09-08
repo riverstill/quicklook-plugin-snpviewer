@@ -137,14 +137,14 @@
         <Border Grid.Row="3" CornerRadius="8" Padding="12,9"
                 BorderBrush="{DynamicResource GridLine}" BorderThickness="1" Margin="20,8,20,8">
             <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                <TextBlock Text="Y轴：" VerticalAlignment="Center" Margin="0,0,8,0" Foreground="{DynamicResource PanelFg}" />
+                <TextBlock x:Name="YAxisLabel" Text="Y轴：" VerticalAlignment="Center" Margin="0,0,8,0" Foreground="{DynamicResource PanelFg}" />
                 <RadioButton x:Name="YDb" Content="dB" GroupName="Y" Style="{StaticResource TabRadio}" Checked="YDb_OnChecked" />
                 <RadioButton x:Name="YMagnitude" Content="幅值" GroupName="Y" Style="{StaticResource TabRadio}" Checked="YMagnitude_OnChecked" />
                 <RadioButton x:Name="YReal" Content="实部" GroupName="Y" Style="{StaticResource TabRadio}" Checked="YReal_OnChecked" />
                 <RadioButton x:Name="YImag" Content="虚部" GroupName="Y" Style="{StaticResource TabRadio}" Checked="YImag_OnChecked" />
                 <RadioButton x:Name="YPhase" Content="相位 (°)" GroupName="Y" Style="{StaticResource TabRadio}" Checked="YPhase_OnChecked" />
                 <Rectangle Width="1" Margin="12,2,12,2" Fill="{DynamicResource GridLine}" VerticalAlignment="Stretch" />
-                <TextBlock Text="X轴：" VerticalAlignment="Center" Margin="0,0,8,0" Foreground="{DynamicResource PanelFg}" />
+                <TextBlock x:Name="XAxisLabel" Text="X轴：" VerticalAlignment="Center" Margin="0,0,8,0" Foreground="{DynamicResource PanelFg}" />
                 <RadioButton x:Name="XLinear" Content="线性" GroupName="X" Style="{StaticResource TabRadio}" Checked="XLinear_OnChecked" />
                 <RadioButton x:Name="XLog" Content="对数" GroupName="X" Style="{StaticResource TabRadio}" Checked="XLog_OnChecked" />
             </StackPanel>
